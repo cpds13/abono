@@ -1,0 +1,2667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo Judicial - Abono de Permanência</title>
+    <style>
+        /* PALETA DE CORES DINÂMICA (VARIÁVEIS) */
+        :root {
+            --primary: #2c3e50;
+            --accent: #34495e;
+            --info: #2980b9;
+            --danger: #e74c3c;
+            --bg: #f8f9fa;
+            --container-bg: #fff;
+            --border: #dcdde1;
+            --salmon-custom: #FFC599; 
+            --text-main: #2f3640;
+            --text-muted: #7f8c8d;
+            --input-bg: #fff;
+            --header-bg: #e2e8f0;
+            --row-hover: rgba(0,0,0,0.02);
+            --th-bg: #2c3e50;
+            --divider-color: #174A67; 
+        }
+
+        /* --- TEMAS (APLICAM-SE NA TELA EM TEMPO REAL) --- */
+        body.theme-sistema {
+            --primary: #174A67;
+            --th-bg: #174A67;
+            --divider-color: #174A67;
+        }
+        body.theme-sistema th { color: #fff; }
+
+        body.theme-classic {
+            --primary: #585a5a;
+            --th-bg: #f5f5f5;
+            --divider-color: #7f8c8d;
+            --info: #585a5a;
+            --header-bg: #d0d3d4;
+        }
+        body.theme-classic th { color: #000; border-color: #7f8c8d; }
+        body.theme-classic .header-row { color: #000 !important; border-color: #7f8c8d !important; }
+
+        body.theme-salmon {
+            --primary: #4d2916;
+            --th-bg: #FFC599;
+            --divider-color: #BE5014;
+            --info: #692a08;
+            --header-bg: #ffecd9;
+        }
+        body.theme-salmon th { color: #000; border-color: #dca377; }
+        body.theme-salmon .header-row { color: #000 !important; border-color: #FFC599 !important; }
+
+        /* SUPORTE AUTOMÁTICO A DARK MODE */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #5dade2; 
+                --accent: #bdc3c7;
+                --info: #3498db;
+                --danger: #e74c3c;
+                --bg: #121212;
+                --container-bg: #1e1e1e;
+                --border: #444;
+                --salmon-custom: #d35400;
+                --text-main: #f5f6fa;
+                --text-muted: #b2bec3;
+                --input-bg: #2d3436;
+                --header-bg: #2d3436;
+                --row-hover: rgba(255,255,255,0.05);
+                --th-bg: #111;
+                --divider-color: #4a8baf;
+            }
+            .sum-row.sub { color: var(--text-muted); border-bottom: 1px dashed #555; }
+            .disabled-row { background-color: #2d3436; opacity: 0.6; }
+            .editable-active { background-color: #4a4123 !important; border-color: #f39c12 !important; color: #fff;}
+            .col-pago { background-color: #3b331c !important; }
+            .note-box { background-color: #2c2317 !important; border-left: 4px solid #e67e22; }
+            .note-box p, .modal-body p, .modal-body li { color: #dfe6e9 !important; }
+            .disclaimer-footer { background-color: #2d3436 !important; border-color: #444 !important; color: #b2bec3 !important; }
+            .tab-btn { color: var(--text-muted); }
+            .btn-link { background-color: #223344 !important; color: #5dade2 !important; border-color: #5dade2 !important; }
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* FUNDO DE IMPRESSÃO / TELA (SANGRIA) */
+        .print-only { display: none !important; }
+
+        .print-bg {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-size: cover; background-repeat: no-repeat; background-position: center;
+            z-index: 0; pointer-events: none; -webkit-print-color-adjust: exact; color-adjust: exact;
+        }
+
+        .container {
+            max-width: 1350px;
+            margin: auto;
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-actions { position: absolute; top: 20px; right: 40px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 80px); }
+        .top-actions a { text-decoration: none; }
+        .top-actions .acao-separador { width: 1px; height: 24px; background: var(--border); margin: 0 3px; }
+        .top-actions .btn { white-space: nowrap; }
+        .notas-modal-content { max-width: 760px; width: min(760px, 92vw); }
+        .notas-modal-textarea { width: 100%; min-height: 260px; resize: vertical; font-size: 0.95em; line-height: 1.55; padding: 13px; box-sizing: border-box; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 7px; }
+        .notas-modal-ajuda { margin: 0 0 12px; color: var(--text-muted); font-size: 0.86em; line-height: 1.45; }
+        .notas-status { font-size: 0.82em; color: var(--text-muted); margin-top: 8px; min-height: 18px; }
+        
+        h1 { color: var(--primary); font-size: 1.8em; border-left: 5px solid var(--info); padding-left: 15px; margin-bottom: 30px; transition: border-color 0.3s, color 0.3s; }
+        h2 { color: var(--accent); font-size: 1.2em; margin-top: 35px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        .grid-input { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; margin-bottom: 25px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 0.85em; color: var(--accent); }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95em; box-sizing: border-box; background-color: var(--input-bg); color: var(--text-main); }
+
+        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-top: 20px;}
+        .tab-btn { background: transparent; border: none; font-size: 1.05em; font-weight: bold; color: var(--text-muted); cursor: pointer; padding: 12px 25px; border-radius: 8px 8px 0 0; transition: 0.3s; }
+        .tab-btn.active { background: var(--info); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .table-container { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th { background-color: var(--th-bg); color: white; padding: 12px 8px; border: 1px solid var(--border); transition: background-color 0.3s, border-color 0.3s; }
+        td { padding: 10px 8px; border: 1px solid var(--border); text-align: right; }
+        
+        .alert-value { color: var(--danger) !important; font-weight: bold; }
+        .disabled-row { opacity: 0.4; background-color: #f2f2f2; text-decoration: line-through; }
+        .editable-active { background-color: #fffbe6; border: 1px dashed #f39c12 !important; cursor: text; }
+        
+        .col-pago { display: none; background-color: #fcf3cf; }
+
+        .btn { border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9em; }
+        .btn-primary { background-color: var(--info); color: white; }
+        .btn-success { background-color: #27ae60; color: white; }
+        .btn-success:hover { background-color: #2ecc71; }
+        .btn-secondary { background-color: var(--accent); color: white; }
+        .btn-salmon { background-color: var(--salmon-custom); color: #fff; border: 1px solid var(--salmon-custom); font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.2);}
+        .btn-outline { background-color: transparent; border: 1.5px solid var(--border); color: var(--text-main); }
+        .btn-outline.active { background-color: #f39c12; color: white; border-color: #f39c12; }
+        .btn-link { background-color: #e8f4f8; color: var(--info); border: 1px solid var(--info); font-size: 0.8em; }
+        .btn-danger-outline { border: 1px solid var(--danger); color: var(--danger); background: transparent; }
+        .btn-danger-outline:hover { background: var(--danger); color: white;}
+        
+        .btn-help { background-color: #f39c12; color: white; border: none; padding: 8px 15px; font-size: 0.85em; }
+        .btn-help:hover { background-color: #e67e22; }
+
+        .summary-card { background: var(--input-bg); padding: 25px; border-radius: 10px; margin-top: 30px; border: 1px solid var(--border); }
+        .sum-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .sum-row.header-row { background: var(--header-bg); font-weight:bold; padding: 10px 12px; margin-top:15px; border-radius: 4px; border: 1px solid var(--border); font-size: 1em; transition: background-color 0.3s;}
+        .sum-row.sub { padding-left: 25px; font-size: 0.88em; border-bottom: 1px dashed #ccc; color: #444; }
+        .sum-row.sub:last-of-type { border-bottom: none; }
+        .total-geral { border: none; font-weight: bold; font-size: 1.25em; color: var(--primary); padding: 15px 0; border-bottom: 2px solid var(--border); transition: color 0.3s; }
+
+        .disclaimer-footer { margin-top: 40px; padding: 15px 25px; background-color: #f8f9fa; border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85em; border-radius: 8px; text-align: center; line-height: 1.5; }
+        .disclaimer-footer strong { color: var(--danger); }
+
+        #pdf-header-print { display: none; }
+        .footer-gen { margin-top: 20px; font-size: 0.85em; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 15px; }
+        .print-footer { display: none; }
+
+        .auxilio-opcional-box { margin-top:12px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--container-bg); font-size:.86em; }
+    .auxilio-opcional-box label { display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text-main); }
+    .auxilio-opcional-box span { display:block; margin:5px 0 0 26px; color:var(--text-muted); line-height:1.35; }
+    .auxilio-decisao { margin-top:16px; padding:12px; border:1px solid var(--border); border-radius:8px; background:var(--row-hover); }
+    .auxilio-decisao label { display:flex; gap:8px; align-items:flex-start; cursor:pointer; }
+    .divider {
+            border: none;
+            border-top: 3px solid var(--divider-color);
+            margin: 30px 0;
+            border-radius: 3px;
+            transition: border-color 0.3s;
+        }
+
+        /* OVERLAY DE DRAG AND DROP */
+        .drag-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(41, 128, 185, 0.95); color: white; font-size: 2em; font-weight: bold;
+            display: none; justify-content: center; align-items: center; text-align: center;
+            z-index: 10000; border: 8px dashed rgba(255,255,255,0.5); box-sizing: border-box;
+        }
+        .drag-overlay.active { display: flex; }
+
+        /* ESTILOS DOS MODAIS */
+        
+    .tutorial-modal-content{max-width:980px;max-height:88vh;overflow-y:auto}
+    .tutorial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:14px 0 18px}
+    .tutorial-card{border:1px solid var(--border);border-radius:9px;padding:12px 13px;background:var(--input-bg);cursor:pointer}
+    .tutorial-card strong{display:block;margin-bottom:5px}
+    .tutorial-card span{color:var(--text-muted);font-size:.82em;line-height:1.35}
+    .tutorial-section{display:none;border-top:1px solid var(--border);padding-top:16px;line-height:1.55}
+    .tutorial-section.active{display:block}
+    .tutorial-table{width:100%;border-collapse:collapse;margin:10px 0 14px}
+    .tutorial-table th,.tutorial-table td{border:1px solid var(--border);padding:7px 9px;text-align:left;vertical-align:top}
+    .tutorial-table th{background:var(--input-bg)}
+    .tutorial-warning{padding:10px 12px;border-left:3px solid #b91c1c;background:rgba(185,28,28,.06);margin:10px 0}
+
+    .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; 
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content {
+            background: var(--container-bg); width: 90%; max-width: 800px; border-radius: 12px; padding: 35px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3); position: relative; max-height: 85vh; overflow-y: auto;
+            transform: translateY(-20px); transition: transform 0.3s ease; border: 1px solid var(--border);
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-close { position: absolute; top: 20px; right: 25px; background: transparent; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-muted); }
+        .modal-close:hover { color: var(--danger); }
+        .modal-title { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;}
+        
+        .modal-body h4 { color: var(--info); margin-bottom: 8px; margin-top: 25px; font-size: 1.1em;}
+        .modal-body p { line-height: 1.6; color: var(--text-main); font-size: 0.95em; text-align: justify; margin-bottom: 10px;}
+        .modal-body ul { padding-left: 20px; margin-top: 5px; }
+        .modal-body li { margin-bottom: 8px; font-size: 0.95em; color: var(--text-main); line-height: 1.5; text-align: justify;}
+        
+
+        .manual-row-badge { display:inline-block; margin-left:6px; padding:2px 6px; border-radius:10px; font-size:.68em; font-weight:700; background:#eef2f7; color:var(--text-muted); vertical-align:middle; }
+        .manual-delete-btn { border:0; background:transparent; color:var(--danger); cursor:pointer; font-size:.9em; margin-left:5px; padding:2px 4px; }
+        .manual-delete-btn:hover { text-decoration:underline; }
+        .manual-second-option {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--input-bg);
+    }
+    .manual-second-option label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        cursor: pointer;
+        font-size: .92em;
+    }
+    .manual-second-option input {
+        width: auto;
+        margin: 0;
+    }
+    .manual-second-help {
+        margin: 6px 0 0 27px;
+        color: var(--text-muted);
+        font-size: .78em;
+        line-height: 1.45;
+    }
+
+    .manual-form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:18px; }
+        .manual-form-grid .form-group { margin-bottom:0; }
+        .manual-form-grid input { width:100%; box-sizing:border-box; }
+        @media (max-width:700px){ .manual-form-grid { grid-template-columns:1fr; } }
+
+        /* --- ESTILOS DO MODAL DE TEMAS --- */
+        .bg-option-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .bg-option-card {
+            cursor: pointer; border: 2px solid var(--border); border-radius: 10px; overflow: hidden;
+            transition: all 0.3s; text-align: center; background: var(--container-bg);
+        }
+        .bg-option-card:hover { border-color: var(--info); transform: translateY(-2px); }
+        .bg-option-card.active { border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.3); }
+        .bg-option-card .bg-preview { width: 100%; height: 80px; background-size: cover; background-position: center; }
+        .bg-option-card .bg-label { padding: 8px; font-weight: 600; font-size: 0.9em; color: var(--text-main); }
+        
+        .bg-upload-area { margin-top: 25px; border-top: 1px dashed var(--border); padding-top: 20px; }
+        .bg-upload-controls { display: flex; gap: 15px; align-items: center; margin-top: 15px; }
+        .bg-preview-box { width: 55px; height: 75px; border: 1px solid var(--border); border-radius: 4px; background-size: cover; background-position: center; background-color: #f2f2f2; }
+
+        /* NOTIFICAÇÃO TOAST */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--container-bg);
+            border-left: 4px solid var(--info);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 9999;
+            max-width: 400px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-notification.success { border-left-color: #27ae60; }
+        .toast-notification h4 { margin: 0 0 8px 0; color: var(--primary); font-size: 1em; }
+        .toast-notification p { margin: 3px 0; font-size: 0.85em; color: var(--text-main); }
+        .toast-notification .close-toast {
+            position: absolute; top: 8px; right: 12px;
+            background: none; border: none; font-size: 1.2em;
+            cursor: pointer; color: var(--text-muted);
+        }
+        .toast-notification .close-toast:hover { color: var(--danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* RECEBIMENTO E LEITURA DA SENTENÇA */
+        .sentenca-box{margin:18px 0 25px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--info);border-radius:8px;background:var(--input-bg)}
+        .sentenca-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}.sentenca-title{margin:0;color:var(--accent);font-size:.95em;font-weight:700}.sentenca-subtitle{margin:3px 0 0;color:var(--text-muted);font-size:.78em}.sentenca-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sentenca-status{margin-top:10px;font-size:.78em;color:var(--text-muted);display:none}.sentenca-status.active{display:block}.sentenca-status.ok{color:#218c54}.sentenca-status.warn{color:#b06a00}.sentenca-status.error{color:var(--danger)}.sentenca-result{display:none;margin-top:13px;padding-top:13px;border-top:1px dashed var(--border)}.sentenca-result.active{display:block}.sentenca-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 18px}.sentenca-item{font-size:.78em;line-height:1.4}.sentenca-item strong{color:var(--accent)}.sentenca-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:.72em;font-weight:700;background:var(--header-bg);color:var(--text-muted)}.sentenca-badge.ok{color:#218c54}.sentenca-badge.warn{color:#b06a00}.sentenca-buttons{margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.sentenca-drop{border:1px dashed var(--border);border-radius:6px;padding:10px 12px;cursor:pointer;color:var(--text-muted);font-size:.78em}.sentenca-drop:hover{border-color:var(--info);color:var(--info)}.correcao-sentenca-card{padding:12px 14px;margin-bottom:15px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg)}.correcao-sentenca-card .linha{display:flex;justify-content:space-between;gap:15px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:.88em}.correcao-sentenca-card .linha:last-child{border-bottom:none}.correcao-sentenca-card .rotulo{color:var(--text-muted)}.correcao-sentenca-card .valor{font-weight:700;text-align:right}.sentenca-fonte{margin-top:12px;padding:9px 11px;border-left:3px solid var(--info);background:var(--header-bg);font-size:.78em;color:var(--text-muted)}
+
+        /* ===== RECEBIMENTO INTEGRADO DAS FICHAS ===== */
+        .fichas-box{margin:18px 0 25px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--info);border-radius:8px;background:var(--input-bg)}
+        .fichas-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}.fichas-title{color:var(--accent);font-size:.95em;font-weight:700}.fichas-subtitle{margin:3px 0 0;color:var(--text-muted);font-size:.78em}.fichas-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fichas-drop{border:1px dashed var(--border);border-radius:6px;padding:10px 12px;cursor:pointer;color:var(--text-muted);font-size:.78em}.fichas-drop:hover{border-color:var(--info);color:var(--info)}
+        .fichas-status{margin-top:10px;font-size:.78em;color:var(--text-muted);display:none}.fichas-status.active{display:block}.fichas-status.ok{color:#218c54}.fichas-status.warn{color:#b06a00}.fichas-status.error{color:var(--danger)}
+        .fichas-list{display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}.fichas-list.active{display:block}.ficha-item{display:flex;align-items:center;gap:8px;padding:7px 9px;margin:4px 0;border:1px solid var(--border);border-radius:6px;background:var(--container-bg);font-size:.76em}.ficha-handle{cursor:grab;color:var(--text-muted);font-size:1.1em}.ficha-num{min-width:22px;color:var(--text-muted);font-weight:700}.ficha-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ficha-remove{border:0;background:transparent;color:var(--danger);cursor:pointer;font-weight:700;padding:2px 6px}.fichas-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.fichas-count{font-size:.74em;color:var(--text-muted)}.fichas-result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+        .modelo-ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.modelo-ficha-btn{padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text-main);cursor:pointer;text-align:left}.modelo-ficha-btn:hover{border-color:var(--info);box-shadow:0 2px 8px rgba(0,0,0,.08)}.modelo-ficha-btn strong{display:block;color:var(--accent);margin-bottom:5px}.modelo-ficha-btn span{font-size:.78em;color:var(--text-muted);line-height:1.4}
+        @media (max-width:640px){.modelo-ficha-grid{grid-template-columns:1fr}}
+
+        @media print {
+            .no-print, .top-actions, .tabs, .modal-overlay, .drag-overlay, .toast-notification, #notasContainer, #modalNotas { display: none !important; }
+            body { padding: 0; background: white; font-size: 11pt; color: #000; margin: 0; } 
+            
+            @page { margin: 8mm; }
+            .container { box-shadow: none; border: none; width: 100%; padding: 0; margin-bottom: 30px; background: transparent;}
+            
+            #pdf-header-print { display: block; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .tab-content { display: block !important; opacity: 1 !important; }
+            .print-only { display: block !important; }
+            .page-break { page-break-before: always; padding-top: 20px; }
+            .page-break section { page-break-inside: avoid; }
+            table { font-size: 9pt; } 
+
+            .print-footer {
+                display: block !important; position: fixed; bottom: 5mm; left: 0; width: 100%; text-align: center;
+                font-size: 9pt; background-color: transparent; padding-top: 5px; border-top: 1px solid #ccc;
+                z-index: 9999;
+            }
+
+            .print-bg { background-size: 100% 100% !important; }
+
+            /* REGRAS ESPECÍFICAS DE IMPRESSÃO POR TEMA */
+            .theme-sistema th, .theme-sistema .header-row { -webkit-print-color-adjust: exact; }
+            .theme-sistema tr:nth-child(odd) { background-color: #ffffff !important; -webkit-print-color-adjust: exact; } 
+            .theme-sistema tr:nth-child(even) { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+
+            .theme-classic th, .theme-classic .header-row { -webkit-print-color-adjust: exact; } 
+            .theme-classic tr:nth-child(odd) { background-color: #f4f4f4 !important; -webkit-print-color-adjust: exact; } 
+            .theme-classic tr:nth-child(even) { background-color: #e6e6e6 !important; -webkit-print-color-adjust: exact; } 
+            
+            .theme-salmon th, .theme-salmon .header-row { -webkit-print-color-adjust: exact; }
+            .theme-salmon tr:nth-child(odd) { background-color: #ffffff !important; -webkit-print-color-adjust: exact; }
+            .theme-salmon tr:nth-child(even) { background-color: #fffaf5 !important; -webkit-print-color-adjust: exact; }
+
+            .disabled-row { display: none; }
+            .sum-row { border-bottom-color: #ccc; }
+            .total-geral { color: #000 !important; }
+            .sum-row.sub { color: #444 !important; }
+            hr.divider { -webkit-print-color-adjust: exact; color-adjust: exact; border-top: 3px solid #174A67 !important; }
+        }
+    </style>
+</head>
+<body id="pageBody">
+
+<div id="printBg" class="print-bg"></div>
+
+<div id="dragOverlay" class="drag-overlay no-print">
+    <span>📂<br>Solte um projeto (.json) ou uma sentença (.pdf) aqui...</span>
+</div>
+
+<!-- NOTIFICAÇÃO TOAST -->
+<div id="toastNotificacao" class="toast-notification no-print">
+    <button class="close-toast" onclick="fecharToast()">&times;</button>
+    <h4>✅ Projeto Carregado</h4>
+    <div id="toastConteudo"></div>
+</div>
+
+<div class="container">
+    <div class="top-actions no-print">
+        <a href="https://docs.google.com/spreadsheets/d/18m9ulJ1e2tHTvRdxpSi0eqERANeg5OWylIVT3EH8hzM/edit?usp=sharing" target="_blank" class="btn btn-link">📊 Planilha base-valores</a>
+        <a href="https://pss-progressivo.streamlit.app/" target="_blank" class="btn btn-link">🧮 Cálculo PSS</a>
+        <a href="https://carlospatrickds.github.io/extrator_siape//" target="_blank" class="btn btn-link">📋 Extração Fichas</a>
+        <a href="https://carlospatrickds.github.io/juntapdf/" target="_blank" class="btn btn-link">📂 Junta PDF</a>
+        <span class="acao-separador" aria-hidden="true"></span>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8em; border-color: var(--info); color: var(--info)" onclick="abrirModalTema()">🎨 Tema</button>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8em; border-color: #7f8c8d; color: var(--text-muted)" onclick="abrirModalNotas()">📝 Notas</button>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8em; border-color: var(--info); color: var(--info)" onclick="abrirModalTutoriais()">📚 Tutoriais</button>
+        <span class="acao-separador" aria-hidden="true"></span>
+        <button class="btn btn-outline btn-danger-outline" style="padding:6px 12px; font-size:0.8em" onclick="novoCalculo()">🧹 Novo Cálculo</button>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8em" onclick="salvarProjeto()">💾 Salvar JSON</button>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8em" onclick="document.getElementById('fileInput').click()">📂 Carregar JSON</button>
+        <input type="file" id="fileInput" style="display:none" accept=".json" onchange="carregarDoInput(this)">
+    </div>
+
+    <h1>Cálculo de Reflexos: Abono de Permanência</h1>
+
+    <div id="pdf-header-print"><div id="print-content"></div></div>
+
+    <section class="no-print">
+        <div class="grid-input">
+            <div class="form-group"><label>Processo nº</label><input type="text" id="procNumero" maxlength="25" oninput="mascaraCNJ(this)" placeholder="0000000-00.0000.0.00.0000"></div>
+            <div class="form-group"><label>Classe</label><input type="text" id="procClasse" value=""></div>
+        </div>
+        <div class="grid-input">
+            <div class="form-group"><label>Parte Autora</label><input type="text" id="procAutor"></div>
+            <div class="form-group"><label>Réu</label><input type="text" id="procReu"></div>
+        </div>
+        <div class="form-group">
+            <label>Assunto do Cálculo</label>
+            <textarea id="procAssunto" rows="2">Apuração dos reflexos decorrentes da inclusão da rubrica abono de permanência ec 41/03 na base de cálculo da Gratificação natalina (13º salário) e Adicional de 1/3 de férias.</textarea>
+        </div>
+
+        <div class="sentenca-box">
+            <div class="sentenca-header">
+                <div><div class="sentenca-title">⚖️ Recebimento da Sentença</div><div class="sentenca-subtitle">Leia o PDF e confira os dados identificados antes de aplicá-los ao cálculo.</div></div>
+                <div class="sentenca-actions">
+                    <label class="sentenca-drop" for="inputSentenca">📄 Selecionar sentença PDF</label>
+                    <input type="file" id="inputSentenca" style="display:none" accept="application/pdf" onchange="receberSentenca(this)">
+                    <button type="button" class="btn btn-outline" style="padding:7px 11px;font-size:.78em" onclick="abrirModalCorrecaoSentenca()">💡 Correção monetária</button>
+                </div>
+            </div>
+            <div id="sentencaStatus" class="sentenca-status"></div>
+            <div id="sentencaResultado" class="sentenca-result">
+                <div id="sentencaBadges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+                <div id="sentencaResumo" class="sentenca-grid"></div>
+                <div id="sentencaBotoes" class="sentenca-buttons"></div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider no-print">
+
+    <section class="no-print">
+        <div class="grid-input">
+            <div class="form-group"><label>Data Ajuizamento</label><input type="date" id="dataAjuizamento" onchange="geraParams(); aplicarPrescricao()"></div>
+            <div class="form-group">
+                <label>Data Citação (mm/aaaa)</label>
+                <input type="text" id="dataCitacao" placeholder="06/2022" maxlength="7" oninput="mascaraData(this); geraParams()">
+            </div>
+            <div class="form-group">
+                <label>Prescrição Quinquenal</label>
+                <select id="prescricaoToggle" onchange="geraParams(); aplicarPrescricao()">
+                    <option value="sim">Sim (5 anos)</option>
+                    <option value="nao">Não Aplicar</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid-input">
+            <div class="form-group"><label>Honorários Contratuais (%)</label><input type="number" id="honContratuais" value="20" onchange="calcularTotaisTodasAbas()"></div>
+            <div class="form-group"><label>Honorários Sucumbência (%)</label><input type="number" id="honSucumbencia" value="0" onchange="calcularTotaisTodasAbas()"></div>
+        </div>
+    </section>
+
+    <hr class="divider no-print">
+
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="openTab('tab1', this)">1. Apuração Histórica</button>
+        <button class="tab-btn" onclick="openTab('tab2', this)">2. Atualização Monetária CJF</button>
+    </div>
+
+    <div id="tab1" class="tab-content active">
+        <section class="no-print">
+            <div class="fichas-box">
+                <div class="fichas-header">
+                    <div><div class="fichas-title">📂 Recebimento integrado das Fichas Financeiras</div><div class="fichas-subtitle">Selecione várias fichas. O sistema irá uni-las na ordem escolhida e, antes da extração, perguntará qual modelo de ficha deve ser utilizado.</div></div>
+                    <div class="fichas-actions">
+                        <label class="fichas-drop" for="inputFichas">📄 Selecionar fichas PDF</label>
+                        <input type="file" id="inputFichas" style="display:none" accept="application/pdf" multiple onchange="adicionarFichasIntegradas(this)">
+                        <button type="button" class="btn btn-outline" style="padding:7px 11px;font-size:.78em" onclick="limparFichasIntegradas()">Limpar</button>
+                    </div>
+                </div>
+                <div id="fichasStatus" class="fichas-status"></div><div class="fichas-status active ok" style="font-size:.76em;margin-top:4px">Motor de extração estrutural: as colunas mensais são identificadas pela posição no PDF; TOTAL não é competência.</div>
+                <div id="fichasLista" class="fichas-list"><div id="fichasItens"></div><div class="fichas-bottom"><span id="fichasContagem" class="fichas-count">0 arquivos</span><button type="button" class="btn btn-primary" style="padding:7px 12px;font-size:.78em" onclick="unirEExtrairFichas()">🔗 Unir e extrair fichas</button></div></div>
+                <div id="fichasResultadoAcoes" class="fichas-result-actions"></div>
+            </div>
+        </section>
+
+        <section class="no-print">
+            <h2>Importação da Ficha Financeira</h2>
+            <textarea id="csvInput" rows="3" placeholder="Cole aqui os dados da ficha financeira..."></textarea>
+            <div class="auxilio-opcional-box">
+                <label><input type="checkbox" id="incluirAuxilioAlimentacao" onchange="alterarInclusaoAuxilio(this.checked)"> <strong>Incluir Auxílio-Alimentação no cálculo</strong></label>
+                <span>A rubrica pode existir na ficha, mas só entra no cálculo quando esta opção estiver marcada. A coluna só é exibida quando houver Auxílio-Alimentação efetivamente considerado.</span>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="processar()">🚀 Processar Histórico</button>
+            </div>
+        </section>
+
+        <section>
+            <div class="no-print" style="margin: 20px 0; display: flex; gap: 10px;">
+                <button id="btnEdit" class="btn btn-outline" onclick="toggleEdit()">🔒 Edição (Aba 1)</button>
+                <button type="button" class="btn btn-outline" onclick="abrirModalCompetenciaManual()">＋ Inserir competência</button>
+                <button id="btnFilter" class="btn btn-outline" onclick="toggleFilter()">👁️ Mostrar Tudo</button>
+                </div>
+
+            <div class="table-container">
+                <table id="mainTable">
+                    <thead>
+                        <tr>
+                            <th class="no-print">Ativo</th>
+                            <th style="text-align:center">Competência</th>
+                            <th>Abono</th>
+                            <th class="col-auxilio-alimentacao">Auxílio-Alimentação</th>
+                            <th>13º Pago</th>
+                            <th>13º Devido</th>
+                            <th>Dif. 13º</th>
+                            <th>1/3 Férias Pago</th>
+                            <th>1/3 Férias Devido</th>
+                            <th>Dif. 1/3</th>
+                            <th>Subtotal Histórico</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="summary-card">
+                <h3>Resumo do Valor Histórico (Sem Correção)</h3>
+                <div class="sum-row"><span>Total Histórico Devido</span> <span id="resBruto">R$ 0,00</span></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="tab2" class="tab-content page-break">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0; margin-bottom: 15px;">
+            <div style="flex:1; min-width:300px;">
+                <input id="tituloCorrecao" type="text" value="Planilha de Atualização Monetária" 
+                    style="width:100%; margin:0; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:1.2em; font-weight:600; color:var(--accent); background:var(--input-bg); box-sizing:border-box;"
+                    title="Título editável da planilha de atualização monetária">
+            </div>
+        </div>
+        
+        <section class="no-print">
+            <textarea id="csvIndices" rows="4" placeholder="Cole os índices aqui ou utilize os botões de carregamento..."></textarea>
+            <div style="margin-top: 15px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="processarIndices()">⚙️ Aplicar Índices</button>
+                
+                <button class="btn btn-outline" onclick="carregarIndicesPlanilha('EC113', this)" style="border-color: var(--info); color: var(--info);">️ Carregar EC 113</button>
+                <button class="btn btn-outline" onclick="carregarIndicesPlanilha('EC136', this)" style="border-color: var(--info); color: var(--info);">⬇️ Carregar EC 136</button>
+                
+                <button class="btn btn-help" onclick="abrirModalExplicacao()">💡 Entenda a Correção</button>
+
+                <label style="font-weight: bold; color: var(--danger); cursor: pointer; margin-left: auto;">
+                    <input type="checkbox" id="chkPagamento" onchange="renderCorrecao()"> Houve abatimento?
+                </label>
+            </div>
+        </section>
+
+        <section>
+            <div class="table-container">
+                <table id="tblCorrecao">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center">Competência</th>
+                            <th>Principal<br>Apurado</th>
+                            <th class="col-pago" style="color:var(--danger)">Valor Pago</th>
+                            <th>Valor Base</th>
+                            <th>Fator Correção</th>
+                            <th>Principal Corrigido</th>
+                            <th>Juros Mora (%)</th>
+                            <th>SELIC (%)</th>
+                            <th>Total Atualizado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableCorrecaoBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="summary-card" style="padding: 15px 25px;">
+                <!-- DETALHAMENTO DOS COMPONENTES DO TOTAL -->
+                <div class="sum-row" style="border-bottom: 1px dashed var(--border); padding-bottom: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 0.9em; color: var(--text-muted);">Detalhamento dos Componentes:</span>
+                    <span></span>
+                </div>
+                <div class="sum-row sub">
+                    <span>├ Principal Corrigido</span>
+                    <span id="resTotalPrincipal">R$ 0,00</span>
+                </div>
+                <div class="sum-row sub">
+                    <span>├ Juros de Mora</span>
+                    <span id="resTotalJuros">R$ 0,00</span>
+                </div>
+                <div class="sum-row sub" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;">
+                    <span>└ SELIC</span>
+                    <span id="resTotalSelic">R$ 0,00</span>
+                </div>
+                
+                <div class="sum-row total-geral" style="padding: 0; border: none;">
+                    <span>TOTAL DA CONDENAÇÃO (Principal + Juros + SELIC)</span> 
+                    <span id="resBrutoAtu">R$ 0,00</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="page-break" style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0; margin-bottom: 0;">
+            <h2 style="margin: 0; border-bottom: none; padding-bottom: 0;">Resumo Final Discriminado</h2>
+        </div>
+        <hr style="border: none; border-bottom: 1px solid var(--border); margin: 10px 0 25px 0;">
+        <div class="summary-card" id="resumoFinalContainer">
+            <div class="sum-row header-row">
+                <span>1. Valor Devido à Parte Autora (<span id="resPercParte">80</span>%)</span> 
+                <span id="resParteTotalAtu">R$ 0,00</span>
+            </div>
+            <div class="sum-row sub"><span>├ Principal Corrigido</span> <span id="resPartePrin">R$ 0,00</span></div>
+            <div class="sum-row sub"><span>├ Juros de Mora</span> <span id="resParteJur">R$ 0,00</span></div>
+            <div class="sum-row sub"><span> SELIC</span> <span id="resParteSelic">R$ 0,00</span></div>
+
+            <div class="sum-row header-row">
+                <span>2. Honorários Contratuais (Retenção - <span id="resPercContrato">20</span>%)</span> 
+                <span id="resContratoTotalAtu">R$ 0,00</span>
+            </div>
+            <div class="sum-row sub"><span>├ Principal Corrigido</span> <span id="resContratoPrin">R$ 0,00</span></div>
+            <div class="sum-row sub"><span>├ Juros de Mora</span> <span id="resContratoJur">R$ 0,00</span></div>
+            <div class="sum-row sub"><span>└ SELIC</span> <span id="resContratoSelic">R$ 0,00</span></div>
+
+            <div id="secSucumbencia">
+                <div class="sum-row header-row" style="margin-top: 25px;">
+                    <span>3. Honorários de Sucumbência (<span id="resPercSucumb">0</span>% sobre a condenação)</span> 
+                    <span id="resSucumbTotalAtu">R$ 0,00</span>
+                </div>
+                <div class="sum-row sub"><span> Principal Corrigido</span> <span id="resSucumbPrin">R$ 0,00</span></div>
+                <div class="sum-row sub"><span>├ Juros de Mora</span> <span id="resSucumbJur">R$ 0,00</span></div>
+                <div class="sum-row sub"><span>└ SELIC</span> <span id="resSucumbSelic">R$ 0,00</span></div>
+            </div>
+
+            <div id="statsBox" style="font-size: 0.85em; color: var(--text-muted); margin-top: 25px; padding-top:10px; border-top: 1px dashed #ccc;"></div>
+        </div>
+
+        <section style="margin-top: 25px;">
+            <h2>Parâmetros Utilizados no Cálculo</h2>
+            <textarea id="txtParametros" rows="6"></textarea>
+        </section>
+    </div> <div class="disclaimer-footer no-print">
+        <strong>Aviso:</strong> As informações inseridas no sistema são de inteira responsabilidade do usuário, devendo este ser responsabilizado por informações falsas ou imprecisas. O sistema tem o intuito de facilitar os cálculos realizados pelos seus desenvolvedores.
+    </div>
+
+    <div class="footer-gen">
+        <label>Arquivo gerado em:</label>
+        <input type="text" id="dataGeracao" style="width: auto; border: none; background: transparent; padding: 0; color: var(--text-muted); font-weight: bold;" readonly>
+    </div>
+
+    <section class="no-print" style="margin-top: 40px; display: flex; gap: 15px; justify-content: center;">
+        <button class="btn btn-primary" onclick="imprimir()" style="font-size: 1.1em; padding: 12px 30px;">️ Imprimir PDF</button>
+    </section>
+
+    <div id="rodapeImpressao" class="print-footer">
+        Sistema de Cálculo de Reflexos: Inclusão de abono de permanência na base de cálculo da gratificação natalina e 1/3 de férias.<br>
+        As informações inseridas no sistema são de inteira responsabilidade do usuário.
+    </div>
+</div>
+
+<div id="modalNotas" class="modal-overlay no-print" onclick="fecharModalNotasFora(event)">
+    <div class="modal-content notas-modal-content">
+        <button class="modal-close" onclick="fecharModalNotas()">&times;</button>
+        <h2 class="modal-title">📝 Notas internas</h2>
+        <div class="modal-body">
+            <p class="notas-modal-ajuda">Use este espaço para registrar observações, pendências, conferências ou detalhes necessários para retomar o cálculo depois. As notas ficam armazenadas no projeto JSON e não aparecem no relatório impresso.</p>
+            <textarea id="notasInternas" class="notas-modal-textarea" placeholder="Digite aqui suas anotações internas..."></textarea>
+            <div id="notasStatus" class="notas-status"></div>
+            <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px">
+                <button class="btn btn-secondary" onclick="fecharModalNotas()">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalTema" class="modal-overlay no-print" onclick="fecharModalForaTema(event)">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fecharModalTema()">&times;</button>
+        <h2 class="modal-title">Personalizar Visual do Relatório</h2>
+        <p style="font-size: 0.9em; color: var(--text-muted);">Escolha a cor da tabela para o PDF final.</p>
+        
+        <div class="bg-option-grid">
+            <div class="bg-option-card" id="card_sistema" onclick="marcarCardModal('sistema')">
+                <div class="bg-preview" style="background: #174A67;"></div>
+                <div class="bg-label">Azul Sistema</div>
+            </div>
+            <div class="bg-option-card" id="card_classico" onclick="marcarCardModal('classico')">
+                <div class="bg-preview" style="background: #7f8c8d;"></div>
+                <div class="bg-label">Clássico P&B</div>
+            </div>
+            <div class="bg-option-card" id="card_salmao" onclick="marcarCardModal('salmao')">
+                <div class="bg-preview" style="background: #FFC599;"></div>
+                <div class="bg-label">Tema Salmão</div>
+            </div>
+        </div>
+
+        <div class="bg-upload-area">
+            <h4 style="margin-top:0; margin-bottom: 5px; color: var(--primary);">Papel Timbrado (Sangria PDF)</h4>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 10px;">Anexe uma imagem no tamanho A4 para cobrir o fundo do App e do PDF.</p>
+            
+            <div class="bg-upload-controls">
+                <div id="bgPreviewImg" class="bg-preview-box"></div>
+                <div>
+                    <button class="btn btn-outline" style="font-size: 0.85em; padding: 6px 15px;" onclick="document.getElementById('inputFundoPdf').click()">📁 Enviar Imagem A4</button>
+                    <button class="btn btn-danger-outline" style="font-size: 0.85em; padding: 6px 15px; margin-left: 8px;" onclick="removerFundo()">🗑️ Remover Fundo</button>
+                    <input type="file" id="inputFundoPdf" style="display:none" accept="image/png, image/jpeg, image/jpg" onchange="processarUploadFundo(this)">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-upload-area" style="margin-top: 20px; padding-top: 15px;">
+            <h4 style="margin-top:0; margin-bottom: 10px; color: var(--primary);">Ajuste de Margens (Sangria)</h4>
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="width: 50%;">
+                    <label>Margem Superior (cm)</label>
+                    <input type="number" id="margemTopo" step="0.5" value="3.5" min="0" max="15">
+                </div>
+                <div class="form-group" style="width: 50%;">
+                    <label>Margem Inferior (cm)</label>
+                    <input type="number" id="margemFundo" step="0.5" value="1.0" min="0" max="15">
+                </div>
+            </div>
+            <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 5px;">Ajuste os valores para não sobrepor o cabeçalho e rodapé da sua imagem.</p>
+        </div>
+
+        <div class="bg-upload-area" style="margin-top: 20px; padding-top: 15px;">
+            <h4 style="margin-top:0; margin-bottom: 10px; color: var(--primary);">Cor do Texto do Rodapé</h4>
+            <div style="display: flex; gap: 15px;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-size: 0.9em; color: var(--text-main);">
+                    <input type="radio" name="corRodape" value="preto"> Preto / Padrão
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-size: 0.9em; color: var(--text-main);">
+                    <input type="radio" name="corRodape" value="branco"> Branco (Para fundos escuros)
+                </label>
+            </div>
+        </div>
+        
+        <div style="text-align: right; margin-top: 30px;">
+            <button class="btn btn-success" onclick="aplicarAlteracoesModal()">✅ Aplicar e Fechar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalExplicacao" class="modal-overlay no-print" onclick="fecharModalFora(event)">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fecharModalExplicacao()">&times;</button>
+        <h2 class="modal-title">Critérios de Atualização e Juros</h2>
+        
+        <div class="modal-body">
+            <h4>1. Aplicação da EC nº 113/2021</h4>
+            <p>A atualização do débito e a incidência de juros observarão os seguintes critérios, em combination com os termos iniciais, índices e percentuais previstos no Manual de Orientação de Procedimentos para os cálculos na Justiça Federal:</p>
+            <ul>
+                <li><strong>Até 08/12/2021:</strong> Os créditos serão corrigidos com observância do Índice de Preços ao Consumidor Amplo Especial (IPCA-E) e incidirão juros de mora equivalentes aos índices aplicáveis à caderneta de poupança, desde a citação (Tema nº 905 do STJ).</li>
+                <li><strong>A partir de 09/12/2021:</strong> Os créditos serão atualizados exclusivamente pelo índice da taxa referencial do Sistema Especial de Liquidação e de Custódia (SELIC), acumulado mensalmente.</li>
+            </ul>
+
+            <h4>2. Aplicação da EC nº 136/2025</h4>
+            <p>A atualização do débito e a incidência de juros observarão os critérios estabelecidos pelos Tribunais Superiores no RE 870.947 e no REsp 1.492.221 (art. 927, III, do CPC):</p>
+            <ul>
+                <li><strong>Até antes da vigência da EC 113/2021:</strong> Correção monetária pelo IPCA-e a contar do vencimento da dívida, e juros de mora equivalentes aos índices oficiais de remuneração básica e juros aplicáveis à caderneta de poupança, desde a citação (art. 1º-F da Lei nº 9.494/97).</li>
+                <li><strong>A partir de 08/12/2021 (EC 113/2021):</strong> Haverá a incidência, uma única vez, até o efetivo pagamento, do índice da taxa referencial da SELIC, acumulado mensalmente.</li>
+                <li><strong>A partir de 09/09/2025 (EC 136/2025):</strong> A atualização monetária e os juros de mora serão aplicados na forma do art. 3º da EC 113/2021, com a redação dada pela EC 136/2025, implicando:
+                    <ul>
+                        <li>Atualização monetária pela variação do IPCA;</li>
+                        <li>Juros de mora simples de 2% ao ano (2% a.a.);</li>
+                        <li><strong>Regra de Teto:</strong> O percentual final de atualização e juros, apurado na forma acima, não poderá ser superior à variação da Taxa Selic para o mesmo período, devendo esta ser aplicada em substituição caso o limite seja ultrapassado.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="note-box">
+                <p><strong>⚠️ Nota Técnica CJF nº 2/2025 (Outubro/2025):</strong></p>
+                <p style="margin-top: 5px;">Devido à Ação Direta de Inconstitucionalidade (ADI 7873), aplica-se rigorosamente o Manual de Orientação de Procedimentos para os Cálculos na Justiça Federal. <br>
+                <a href="https://www.cjf.jus.br/cjf/corregedoria-da-justica-federal/corregedoria-geral-da-justica-federal/comissao-de-solucoes-fundiarias/nota-tecnica-n-2-2025.pdf/@@download/file/NOTA%20T%C3%89CNICA%20N.%202-2025.pdf" target="_blank">Acessar a Nota Técnica na Íntegra 🔗</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <div id="modalTutoriais" class="modal-overlay no-print" onclick="fecharModalTutoriaisFora(event)">
+        <div class="modal-content tutorial-modal-content">
+            <div class="modal-header"><h2>📚 Tutoriais do Sistema</h2><button class="modal-close" onclick="fecharModalTutoriais()">×</button></div>
+            <p>Guia rápido para compreender o funcionamento do sistema. <strong>Esta área é apenas informativa e não altera os motores de cálculo ou de extração.</strong></p>
+            <div class="tutorial-grid">
+                <div class="tutorial-card" onclick="mostrarTutorial('como')"><strong>🧭 Como funciona</strong><span>Fluxo geral do cálculo.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('sentenca')"><strong>📜 Sentença</strong><span>Recebimento e conferência.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('fichas')"><strong>📂 Fichas Financeiras</strong><span>Extração e conferência.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('apuracao')"><strong>📊 Apuração</strong><span>Como ler a tabela.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('manual')"><strong>✏️ Complementação Manual</strong><span>Inserção de competências.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('vermelho')"><strong>🔴 Valores em vermelho</strong><span>Significado das diferenças.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('correcao')"><strong>💰 Atualização Monetária</strong><span>Visão geral da atualização.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('json')"><strong>💾 JSON</strong><span>Salvar e carregar projetos.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('decisoes')"><strong>⚖️ Decisões</strong><span>Sentença, acórdão e título.</span></div>
+                <div class="tutorial-card" onclick="mostrarTutorial('abono')"><strong>📖 Abono de Permanência</strong><span>Conceito e uso no cálculo.</span></div>
+            </div>
+            <div id="tutorial-como" class="tutorial-section"><h3>🧭 Como o sistema funciona</h3><p>O fluxo geral é: <strong>sentença → fichas financeiras → extração → conferência → apuração histórica → prescrição → atualização monetária → totais.</strong></p><div class="tutorial-warning">A extração automática é ferramenta de apoio. Confira os valores e o título judicial antes de utilizar o cálculo.</div></div>
+            <div id="tutorial-sentenca" class="tutorial-section"><h3>📜 Recebimento da Sentença</h3><p>O sistema pode ler o PDF e procurar informações processuais e referências ao objeto da ação.</p><table class="tutorial-table"><tr><th>Informação</th><th>Tratamento</th></tr><tr><td>Processo</td><td>Identificação do número do processo.</td></tr><tr><td>Autor / Réu</td><td>Identificação das partes.</td></tr><tr><td>Última distribuição</td><td>Usada para preencher a data de ajuizamento.</td></tr><tr><td>Objeto</td><td>Referências a Abono, Auxílio-Alimentação, 13º e férias.</td></tr><tr><td>Prescrição / correção</td><td>Referências encontradas devem ser conferidas.</td></tr></table><div class="tutorial-warning">A leitura automática não substitui a conferência jurídica.</div></div>
+            <div id="tutorial-fichas" class="tutorial-section"><h3>📂 Fichas Financeiras</h3><p>O sistema pode unir vários PDFs e processar as fichas pelo modelo correspondente. Os valores extraídos devem ser conferidos.</p><p><strong>Auxílio-Alimentação:</strong> ser encontrado na ficha não significa automaticamente que será calculado.</p><p><strong>Férias:</strong> <code>FERIAS-ANTECIPACAO</code> não deve ser confundida com <code>FERIAS - ADICIONAL 1/3</code>.</p></div>
+            <div id="tutorial-apuracao" class="tutorial-section"><h3>📊 Apuração Histórica</h3><table class="tutorial-table"><tr><th>Campo</th><th>Significado</th></tr><tr><td>Abono</td><td>Valor utilizado de Abono de Permanência.</td></tr><tr><td>Auxílio-Alimentação</td><td>Valor efetivamente autorizado para o cálculo.</td></tr><tr><td>13º Pago</td><td>Valor identificado como pago.</td></tr><tr><td>13º Devido</td><td>Resultado do reflexo conforme as regras do motor.</td></tr><tr><td>Dif. 13º</td><td>Diferença entre devido e pago.</td></tr><tr><td>1/3 Férias Pago</td><td>Valor especificamente identificado como adicional de 1/3.</td></tr><tr><td>1/3 Férias Devido</td><td>Resultado do reflexo.</td></tr><tr><td>Dif. 1/3</td><td>Diferença entre devido e pago.</td></tr></table></div>
+            <div id="tutorial-manual" class="tutorial-section"><h3>✏️ Complementação Manual</h3><p>Use <strong>＋ Inserir competência</strong> quando faltar uma competência ou um valor.</p><p>É possível criar uma segunda competência automaticamente: o sistema usa o mês seguinte, repete o Auxílio-Alimentação e deixa Abono, 13º Pago e 1/3 Férias Pago para preenchimento posterior.</p><p>Linhas manuais ficam identificadas como <strong>Manual</strong>.</p></div>
+            <div id="tutorial-vermelho" class="tutorial-section"><h3>🔴 Valores em vermelho</h3><p>O vermelho destaca <strong>diferenças apuradas pelo motor</strong>.</p><table class="tutorial-table"><tr><th>Campo</th><th>Significado</th></tr><tr><td>🔴 Dif. 13º</td><td>Diferença calculada entre o 13º devido e o 13º pago.</td></tr><tr><td>🔴 Dif. 1/3</td><td>Diferença calculada entre o 1/3 devido e o 1/3 pago.</td></tr></table><p>O vermelho é uma sinalização visual; sempre interprete o valor junto com o título da coluna.</p></div>
+            <div id="tutorial-correcao" class="tutorial-section"><h3>💰 Atualização Monetária</h3><p>A Aba 2 apresenta a atualização dos valores históricos segundo os parâmetros e índices carregados no projeto, separando principal corrigido, juros de mora e SELIC quando aplicáveis.</p><div class="tutorial-warning">O painel informativo de índices não altera automaticamente o motor de cálculo.</div></div>
+            <div id="tutorial-json" class="tutorial-section"><h3>💾 Salvar e Carregar JSON</h3><p>O JSON é o arquivo de projeto e preserva os parâmetros e dados necessários para continuar o cálculo.</p><p>As competências manuais também devem ser preservadas e restauradas.</p></div>
+            <div id="tutorial-decisoes" class="tutorial-section"><h3>⚖️ Entenda as Decisões</h3><p><strong>Sentença</strong> é a decisão judicial de primeiro grau. <strong>Acórdão</strong> é a decisão colegiada de tribunal.</p><p>Na elaboração do cálculo, confira parcelas deferidas, período, base, reflexos, prescrição, juros, correção, termos inicial/final e honorários/sucumbência.</p><div class="tutorial-warning">A comparação automática entre sentença e acórdão não faz parte desta versão.</div></div>
+            <div id="tutorial-abono" class="tutorial-section"><h3>📖 O que é o Abono de Permanência?</h3><p>É uma verba relacionada ao servidor que, preenchidos os requisitos da regra aplicável para aposentadoria voluntária, permanece em atividade, observadas as condições legais e constitucionais pertinentes.</p><p>Neste sistema, o Abono pode compor a base dos reflexos em <strong>gratificação natalina (13º) e adicional de 1/3 de férias</strong>, quando isso estiver determinado no título judicial.</p><div class="tutorial-warning">A existência do Abono na ficha não significa automaticamente que determinada parcela deva ser incluída no cálculo.</div></div>
+            <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharModalTutoriais()">Fechar</button></div>
+        </div>
+    </div>
+
+<div id="modalCompetenciaManual" class="modal-overlay no-print" onclick="fecharModalCompetenciaManualFora(event)">
+    <div class="modal-content" style="max-width:650px">
+        <button class="modal-close" onclick="fecharModalCompetenciaManual()">&times;</button>
+        <h2 class="modal-title">Inserir competência manual</h2>
+        <div class="modal-body">
+            <p>Use esta opção quando uma competência não estiver presente nas fichas ou quando precisar complementar o histórico manualmente. Os campos devidos serão recalculados automaticamente.</p>
+            <div class="manual-form-grid">
+                <div class="form-group">
+                    <label>Competência (MM/AAAA)</label>
+                    <input id="manualCompetencia" type="text" placeholder="Ex.: 04/2023" maxlength="7">
+                </div>
+                <div class="form-group">
+                    <label>Abono de Permanência</label>
+                    <input id="manualAbono" type="text" inputmode="decimal" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label>Auxílio-Alimentação</label>
+                    <input id="manualAuxilio" type="text" inputmode="decimal" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label>13º Pago</label>
+                    <input id="manualGratP" type="text" inputmode="decimal" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label>1/3 Férias Pago</label>
+                    <input id="manualFerP" type="text" inputmode="decimal" placeholder="0,00">
+                </div>
+            </div>
+
+            <div class="manual-second-option">
+                <label>
+                    <input type="checkbox" id="manualAdicionarSegunda">
+                    <strong>Preencher a segunda competência automaticamente</strong>
+                </label>
+                <div class="manual-second-help">
+                    A segunda será o mês seguinte. O <strong>Auxílio-Alimentação</strong> será repetido; 
+                    <strong>Abono, 13º Pago e 1/3 Férias Pago</strong> ficarão vazios para você preencher.
+                </div>
+            </div>
+            <div class="note-box" style="margin-top:18px">
+                <p><strong>Importante:</strong> a linha será marcada internamente como <strong>Manual</strong>. Ela poderá ser editada depois pela função <strong>Edição (Aba 1)</strong> e excluída pelo botão ✕ da própria linha. Se uma linha já estiver inativada, inserir novas competências não a reativará.</p>
+            </div>
+            <div style="text-align:right;margin-top:22px;display:flex;justify-content:flex-end;gap:8px">
+                <button class="btn btn-outline" onclick="fecharModalCompetenciaManual()">Cancelar</button>
+                <button class="btn btn-success" onclick="adicionarCompetenciaManual()">＋ Inserir na tabela</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modalModeloFichaIntegrada" class="modal-overlay no-print" onclick="fecharModalModeloFichaIntegradaFora(event)">
+    <div class="modal-content" style="max-width:650px">
+        <button class="modal-close" onclick="fecharModalModeloFichaIntegrada()">&times;</button>
+        <h2 class="modal-title">Escolha o modelo da ficha</h2>
+        <div class="modal-body">
+            <p>As fichas foram unificadas. <strong>Qual modelo de ficha financeira deverá ser utilizado para a extração?</strong></p>
+            <div class="modelo-ficha-grid">
+                <button type="button" class="modelo-ficha-btn" onclick="extrairFichasModeloIntegrado('antiga')"><strong>📘 Ficha Antiga</strong><span>Padrão com colunas delimitadas por <b>| |</b>. Utiliza o mesmo motor da aba “Ficha Antiga” do extrator.</span></button>
+                <button type="button" class="modelo-ficha-btn" onclick="extrairFichasModeloIntegrado('nova')"><strong>📗 Ficha Nova</strong><span>Formato alternativo, com detecção de Rendimento/Desconto e metadados. Utiliza o mesmo motor da aba “Ficha Nova”.</span></button>
+            </div>
+            <div class="auxilio-decisao">
+                <label><input type="checkbox" id="modeloIncluirAuxilio" onchange="atualizarInclusaoAuxilioAPartirDoModal(this.checked)"> <span><strong>Incluir Auxílio-Alimentação no cálculo</strong><br><small>A ficha pode conter a rubrica, mas ela só será considerada se esta opção estiver marcada. Se a sentença tiver determinado expressamente a inclusão, ela será pré-marcada.</small></span></label>
+            </div>
+            <div id="modeloFichaStatus" style="margin-top:14px;font-size:.8em;color:var(--text-muted)"></div>
+        </div>
+    </div>
+</div>
+<div id="modalCorrecaoSentenca" class="modal-overlay no-print" onclick="fecharModalForaCorrecaoSentenca(event)"><div class="modal-content"><button class="modal-close" onclick="fecharModalCorrecaoSentenca()">&times;</button><h2 class="modal-title">Informações de Correção Monetária da Sentença</h2><div id="correcaoSentencaConteudo" class="modal-body"><p>Nenhuma sentença foi recebida ainda.</p></div></div></div>
+<div id="modalRevisaoSentenca" class="modal-overlay no-print" onclick="fecharModalForaRevisaoSentenca(event)"><div class="modal-content"><button class="modal-close" onclick="fecharModalRevisaoSentenca()">&times;</button><h2 class="modal-title">Revisão da Sentença</h2><div id="revisaoSentencaConteudo" class="modal-body"></div><div style="text-align:right;margin-top:25px;display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-outline" onclick="fecharModalRevisaoSentenca()">Cancelar</button><button class="btn btn-success" onclick="aplicarDadosSentenca()">✅ Aplicar dados ao cálculo</button></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    let dados = [];
+    let indicesMap = {};
+    let editMode = false, filterAll = false;
+    
+    let imagemFundoGlobal = null; 
+    let temaTemporarioModal = 'sistema';
+    let sentencaAtual = null;
+    let incluirAuxilioAlimentacao = false;
+
+    const fmtNum = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtIdx = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+    const fmtMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
+    const parseV = (s) => {
+        if (!s) return 0;
+        let n = s.toString().replace(/[^\d,-]/g, '').replace(',', '.');
+        return parseFloat(n) || 0;
+    };
+
+    // Normaliza rubricas para tolerar acentos e caracteres corrompidos (�)
+    // sem alterar o motor de extração da ficha financeira.
+    const normalizarRubrica = (s) => {
+        return s.toString()
+            .toUpperCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\uFFFD/g, '')
+            .replace(/[^A-Z0-9]+/g, ' ')
+            .trim()
+            .replace(/\s+/g, ' ');
+    };
+
+    // Identifica EXCLUSIVAMENTE a rubrica de 1/3 de férias.
+    // Rubricas como FERIAS-ANTECIPACAO REMUN.CARGO não entram em ferP.
+    const ehFeriasAdicionalTerco = (s) => {
+        const n = normalizarRubrica(s);
+        return n.includes('FERIAS') && n.includes('ADICIONAL') && n.includes('1 3');
+    };
+
+    const ehAuxilioAlimentacao = (s) => {
+        const original = s.toString().toUpperCase();
+        const normalizada = normalizarRubrica(s);
+
+        // Aceita tanto AUXÍLIO-ALIMENTAÇÃO quanto AUX�LIO-ALIMENTAC�O.
+        return /AUX.?LIO\s*[- ]?\s*ALIMENTAC.?O/.test(original) ||
+               normalizada === 'AUXLIO ALIMENTACO' ||
+               normalizada === 'AUXILIO ALIMENTACAO' ||
+               normalizada.includes('AUXLIO ALIMENTACO') ||
+               normalizada.includes('AUXILIO ALIMENTACAO');
+    };
+
+    // Permite colagem tanto TSV (tabulação) quanto tabela Markdown com |.
+    const separarLinhaFicha = (linha) => {
+        const limpa = linha.trim();
+        if (!limpa) return [];
+        if (limpa.includes('\t')) return limpa.split('\t').map(c => c.trim());
+        if (limpa.includes('|')) {
+            return limpa.replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '')
+                        .split('|').map(c => c.trim());
+        }
+        return [limpa];
+    };
+
+    function abrirModalTutoriais(){document.getElementById('modalTutoriais').classList.add('active');mostrarTutorial('como');}
+    function fecharModalTutoriais(){document.getElementById('modalTutoriais').classList.remove('active');}
+    function fecharModalTutoriaisFora(event){if(event.target.id==='modalTutoriais')fecharModalTutoriais();}
+    function mostrarTutorial(nome){document.querySelectorAll('#modalTutoriais .tutorial-section').forEach(e=>e.classList.remove('active'));const e=document.getElementById('tutorial-'+nome);if(e)e.classList.add('active');}
+
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ fecharModalNotas(); fecharModalTutoriais(); } });
+
+    function mascaraData(input) {
+        let v = input.value.replace(/\D/g, "");
+        if (v.length >= 2) v = v.substring(0, 2) + "/" + v.substring(2, 6);
+        input.value = v;
+    }
+
+    function mascaraCNJ(input) {
+        let v = input.value.replace(/\D/g, "");
+        v = v.replace(/^(\d{7})(\d)/, "$1-$2");
+        v = v.replace(/-(\d{2})(\d)/, "-$1.$2");
+        v = v.replace(/\.(\d{4})(\d)/, ".$1.$2");
+        v = v.replace(/\.(\d{4})\.(\d{1})(\d)/, ".$1.$2.$3");
+        v = v.replace(/\.(\d{1})\.(\d{2})(\d)/, ".$1.$2.$3");
+        if (v.length > 25) v = v.substring(0, 25);
+        input.value = v;
+    }
+
+    function parseMesAnoIndex(str) {
+        let s = str.toLowerCase().replace(/\./g, '').trim(); 
+        let parts = s.split('/');
+        if (parts.length === 3) {
+            let mes = parts[1].padStart(2, '0');
+            let ano = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+            return `${mes}/${ano}`;
+        }
+        if (parts.length === 2) {
+            const mapa = { 'jan':'01', 'fev':'02', 'mar':'03', 'abr':'04', 'mai':'05', 'jun':'06', 'jul':'07', 'ago':'08', 'set':'09', 'out':'10', 'nov':'11', 'dez':'12', '13º':'13' };
+            let mes = mapa[parts[0]] || parts[0].padStart(2, '0');
+            let ano = parts[1].length === 2 ? '20' + parts[1] : parts[1];
+            return `${mes}/${ano}`;
+        }
+        return s;
+    }
+
+    function setInitialDate() {
+        const dGen = document.getElementById('dataGeracao');
+        if (dGen) {
+            let hoje = new Date();
+            let dia = String(hoje.getDate()).padStart(2, '0');
+            let mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            let ano = hoje.getFullYear();
+            dGen.value = `${dia}/${mes}/${ano}`;
+        }
+    }
+
+    function openTab(tabId, btn) {
+        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // 🔹 Notas Internas — mantidas no projeto JSON, em modal para não poluir a tela principal
+    function abrirModalNotas() {
+        const modal = document.getElementById('modalNotas');
+        if (!modal) return;
+        modal.classList.add('active');
+        const ta = document.getElementById('notasInternas');
+        const status = document.getElementById('notasStatus');
+        if (status) status.textContent = ta && ta.value.trim() ? 'Nota existente carregada neste projeto.' : 'Nenhuma nota registrada.';
+        setTimeout(() => ta && ta.focus(), 80);
+    }
+    function fecharModalNotas() {
+        const modal = document.getElementById('modalNotas');
+        if (modal) modal.classList.remove('active');
+    }
+    function fecharModalNotasFora(event) {
+        if (event.target.id === 'modalNotas') fecharModalNotas();
+    }
+    function toggleNotas() { abrirModalNotas(); }
+
+    function abrirModalTema() {
+        document.getElementById('modalTema').classList.add('active');
+        atualizarInterfaceModal();
+    }
+    
+    function fecharModalTema() { document.getElementById('modalTema').classList.remove('active'); }
+    function fecharModalForaTema(event) { if(event.target.id === 'modalTema') fecharModalTema(); }
+
+    function marcarCardModal(tipo) {
+        temaTemporarioModal = tipo;
+        document.querySelectorAll('#modalTema .bg-option-card').forEach(c => c.classList.remove('active'));
+        const cardAtivo = document.getElementById(`card_${tipo}`);
+        if(cardAtivo) cardAtivo.classList.add('active');
+    }
+
+    function atualizarInterfaceModal() {
+        temaTemporarioModal = localStorage.getItem('tema_ativo_tipo') || 'sistema';
+        marcarCardModal(temaTemporarioModal);
+
+        let corRodapeAtiva = localStorage.getItem('fundo_rodape_cor') || 'preto';
+        let radioRodape = document.querySelector(`input[name="corRodape"][value="${corRodapeAtiva}"]`);
+        if(radioRodape) radioRodape.checked = true;
+
+        document.getElementById('margemTopo').value = localStorage.getItem('sangria_margem_topo') || '3.5';
+        document.getElementById('margemFundo').value = localStorage.getItem('sangria_margem_fundo') || '1.0';
+    }
+
+    function aplicarAlteracoesModal() {
+        localStorage.setItem('tema_ativo_tipo', temaTemporarioModal);
+        document.getElementById('pageBody').className = 
+            (temaTemporarioModal === 'classico' ? 'theme-classic' : 
+            (temaTemporarioModal === 'salmao' ? 'theme-salmon' : 'theme-sistema'));
+
+        const corSelecionada = document.querySelector('input[name="corRodape"]:checked');
+        if(corSelecionada) {
+            localStorage.setItem('fundo_rodape_cor', corSelecionada.value);
+        }
+
+        localStorage.setItem('sangria_margem_topo', document.getElementById('margemTopo').value);
+        localStorage.setItem('sangria_margem_fundo', document.getElementById('margemFundo').value);
+
+        renderizarFundoNaTela();
+        
+        setInitialDate();
+
+        fecharModalTema();
+    }
+
+    function renderizarFundoNaTela() {
+        const bgApp = document.getElementById('printBg');
+        if (imagemFundoGlobal) {
+            bgApp.style.display = 'block';
+            bgApp.style.backgroundImage = `url('${imagemFundoGlobal}')`;
+            document.getElementById('bgPreviewImg').style.backgroundImage = `url('${imagemFundoGlobal}')`;
+        } else {
+            bgApp.style.display = 'none';
+            bgApp.style.backgroundImage = 'none';
+            document.getElementById('bgPreviewImg').style.backgroundImage = 'none';
+        }
+    }
+
+    function processarUploadFundo(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const result = e.target.result;
+            imagemFundoGlobal = result;
+            document.getElementById('bgPreviewImg').style.backgroundImage = `url('${result}')`;
+            
+            try {
+                localStorage.setItem('backup_fundo_pdf_sangria', result);
+            } catch(err) {
+                console.warn("Imagem muito pesada para salvar no cache do navegador.");
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removerFundo() {
+        imagemFundoGlobal = null;
+        localStorage.removeItem('backup_fundo_pdf_sangria');
+        document.getElementById('inputFundoPdf').value = '';
+        document.getElementById('bgPreviewImg').style.backgroundImage = 'none';
+    }
+
+    function abrirModalExplicacao() { document.getElementById('modalExplicacao').classList.add('active'); }
+    function fecharModalExplicacao() { document.getElementById('modalExplicacao').classList.remove('active'); }
+    function fecharModalFora(event) { if(event.target.id === 'modalExplicacao') fecharModalExplicacao(); }
+
+    function geraParams() {
+        const aju = document.getElementById('dataAjuizamento').value;
+        const cit = document.getElementById('dataCitacao').value;
+        const pre = document.getElementById('prescricaoToggle').value;
+        let d = aju ? aju.split('-').reverse().join('/') : '__/__/____';
+        
+        const txtParam = document.getElementById('txtParametros');
+        if (txtParam) {
+            txtParam.value = `Atualização monetária conforme Sentença ID    .\n\nAjuizamento em ${d}, ${pre === 'sim' ? 'Diferenças observando a prescrição quinquenal' : 'sem prescrição'}. Citação em ${cit || '__/____'}, termo inicial dos juros.`;
+        }
+    }
+
+    function novoCalculo() {
+        if(!confirm("Tem certeza que deseja apagar todos os dados e iniciar um novo cálculo? Essa ação não pode ser desfeita.")) {
+            return;
+        }
+        
+        document.getElementById('procNumero').value = '';
+        document.getElementById('procClasse').value = 'CUMPRIMENTO DE SENTENÇA';
+        document.getElementById('procAutor').value = '';
+        document.getElementById('procReu').value = '';
+        document.getElementById('procAssunto').value = 'Apuração dos reflexos decorrentes da inclusão da rubrica abono de permanência ec 41/03 na base de cálculo da Gratificação natalina (13º salário) e Adicional de 1/3 de férias.';
+        document.getElementById('dataAjuizamento').value = '';
+        document.getElementById('dataCitacao').value = '';
+        document.getElementById('prescricaoToggle').value = 'sim';
+        document.getElementById('honContratuais').value = '20';
+        document.getElementById('honSucumbencia').value = '0';
+        document.getElementById('tituloCorrecao').value = 'Planilha de Atualização Monetária';
+        document.getElementById('txtParametros').value = '';
+        document.getElementById('notasInternas').value = '';
+        document.getElementById('inputSentenca').value = '';
+        sentencaAtual = null;
+        renderSentencaRecebida();
+        inicializarOrdenacaoFichasIntegradas();
+        
+        document.getElementById('csvInput').value = '';
+        document.getElementById('chkPagamento').checked = false;
+        fecharModalNotas();
+        
+        dados = [];
+        filterAll = false;
+        editMode = false;
+        document.getElementById('btnEdit').classList.remove('active');
+        
+        setInitialDate();
+        geraParams();
+        renderApuracao();
+        renderCorrecao();
+        atualizarVisibilidadeColunaAuxilio();
+    }
+
+    function aplicarPrescricao() {
+        const ajuInput = document.getElementById('dataAjuizamento').value;
+        const pre = document.getElementById('prescricaoToggle').value;
+
+        if (dados.length === 0) return;
+
+        if (pre === 'sim' && !ajuInput) {
+            return;
+        }
+
+        let corteDate = null;
+        if (pre === 'sim') {
+            let [anoAju, mesAju, diaAju] = ajuInput.split('-');
+            corteDate = new Date(anoAju - 5, mesAju - 1, 1);
+        }
+
+        dados.forEach(d => {
+            let parts = d.c.split('/');
+            if(parts.length === 2) {
+                let compDate = new Date(parseInt(parts[1]), parseInt(parts[0]) - 1, 1);
+                const habilitadaPelaPrescricao = pre === 'sim' ? (compDate >= corteDate) : true;
+
+                // Uma linha que o usuário inativou manualmente permanece inativa
+                // mesmo quando uma nova competência é inserida e a prescrição é recalculada.
+                d.hab = d.manualInativa === true ? false : habilitadaPelaPrescricao;
+            }
+        });
+
+        renderApuracao();
+        renderCorrecao();
+    }
+
+    function alterarInclusaoAuxilio(checked) {
+        incluirAuxilioAlimentacao = !!checked;
+        dados.forEach(r => {
+            if (r.auxAlimExtraido === undefined) r.auxAlimExtraido = parseFloat(r.auxAlim) || 0;
+            r.auxAlim = incluirAuxilioAlimentacao ? (parseFloat(r.auxAlimExtraido) || 0) : 0;
+            const baseReflexos = (r.abono || 0) + (r.auxAlim || 0);
+            r.gratD = r.gratP > 0 ? r.gratP + baseReflexos : 0;
+            r.ferD = r.ferP > 0 ? r.ferP + (baseReflexos / 3) : 0;
+        });
+        renderApuracao();
+        renderCorrecao();
+        geraParams();
+    }
+
+    function atualizarInclusaoAuxilioAPartirDoModal(checked) {
+        incluirAuxilioAlimentacao = !!checked;
+        const cb = document.getElementById('incluirAuxilioAlimentacao');
+        if (cb) cb.checked = incluirAuxilioAlimentacao;
+    }
+
+    function processar() {
+        const raw = document.getElementById('csvInput').value.trim();
+        if (!raw) return alert("Cole os dados da ficha financeira.");
+
+        const linhas = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (!linhas.length) return alert("Cole os dados da ficha financeira.");
+
+        const header = separarLinhaFicha(linhas[0]).map(h =>
+            normalizarRubrica(h.replace(/^\uFEFF/, ''))
+        );
+
+        const iD = header.findIndex(h =>
+            h === 'DISCRIMINACAO' || h === 'DESCRICAO' || h.includes('DISCRIMINACAO')
+        );
+        const iV = header.findIndex(h => h === 'VALOR');
+        const iC = header.findIndex(h =>
+            h === 'COMPETENCIA' || h.includes('COMPETENCIA')
+        );
+
+        if (iD === -1 || iV === -1 || iC === -1) {
+            return alert("Erro de leitura: O cabeçalho dos dados deve conter 'Discriminacao', 'Valor' e 'Competencia'.");
+        }
+
+        let agrupar = {};
+        for (let i = 1; i < linhas.length; i++) {
+            const col = separarLinhaFicha(linhas[i]);
+            if (col.length <= Math.max(iD, iV, iC)) continue;
+
+            // Ignora a linha separadora típica de tabelas Markdown.
+            if (col.every(c => /^[-:]+$/.test(c.replace(/\s/g, '')))) continue;
+
+            const d = col[iD].toString().trim();
+            const rubrica = normalizarRubrica(d);
+            const v = parseV(col[iV]);
+            const c = parseMesAnoIndex(col[iC].trim());
+            if (!c) continue;
+
+            if (!agrupar[c]) {
+                agrupar[c] = {
+                    abono: 0,
+                    auxAlim: 0,
+                    auxAlimExtraido: 0,
+                    grat: 0,
+                    fer: 0,
+                    pagoVal: 0
+                };
+            }
+
+            if (rubrica.includes('ABONO DE PERMANENCIA')) {
+                agrupar[c].abono += v;
+            } else if (rubrica.includes('GRATIFICACAO NATALINA')) {
+                agrupar[c].grat += v;
+            } else if (ehFeriasAdicionalTerco(d)) {
+                // Somente FERIAS - ADICIONAL 1/3 entra em ferP.
+                // FERIAS-ANTECIPACAO REMUN.CARGO e demais verbas de férias ficam fora.
+                agrupar[c].fer += v;
+            } else if (ehAuxilioAlimentacao(d)) {
+                agrupar[c].auxAlimExtraido += v;
+            }
+        }
+
+        dados = Object.keys(agrupar).map(c => {
+            const o = agrupar[c];
+            const anterior = dados.find(x => x.c === c) || {};
+            const pagoPrevio = anterior.pagoVal || 0;
+
+            return {
+                c,
+                abono: o.abono,
+                auxAlimExtraido: o.auxAlimExtraido || 0,
+                auxAlim: incluirAuxilioAlimentacao ? (o.auxAlimExtraido || 0) : 0,
+                gratP: o.grat,
+                ferP: o.fer,
+                pagoVal: pagoPrevio,
+                hab: anterior.manualInativa === true ? false : true,
+                manualInativa: anterior.manualInativa === true,
+                origem: anterior.origem || 'extracao',
+                // O auxílio-alimentação integra a mesma base de reflexos do abono
+                // quando houver a respectiva verba paga no mês.
+                gratD: o.grat > 0 ? o.grat + o.abono + o.auxAlim : 0,
+                ferD: o.fer > 0 ? o.fer + ((o.abono + o.auxAlim) / 3) : 0
+            };
+        }).sort((a, b) => {
+            const da = a.c.split('/'), db = b.c.split('/');
+            return new Date(da[1], da[0] - 1) - new Date(db[1], db[0] - 1);
+        });
+
+        aplicarPrescricao();
+    }
+
+    function atualizarVisibilidadeColunaAuxilio() {
+        const tabela = document.getElementById('mainTable');
+        if (!tabela) return;
+
+        // A coluna só aparece quando existe valor de Auxílio-Alimentação
+        // efetivamente incluído no cálculo. Se a ficha não tiver auxílio,
+        // ou se ele estiver desativado, a coluna fica oculta.
+        const temAuxilioNoCalculo = Array.isArray(dados) &&
+            dados.some(r => (parseFloat(r.auxAlim) || 0) !== 0);
+
+        tabela.querySelectorAll('.col-auxilio-alimentacao').forEach(el => {
+            el.style.display = temAuxilioNoCalculo ? '' : 'none';
+        });
+    }
+
+    function renderApuracao() {
+        const body = document.getElementById('tableBody');
+        body.innerHTML = '';
+        dados.forEach((r, i) => {
+            // Base comum dos reflexos:
+            // Abono + Auxílio-Alimentação.
+            // Para férias, a base é refletida em 1/3.
+            const baseReflexos = (r.abono || 0) + (r.auxAlim || 0);
+            const reflexo13 = r.gratP > 0 ? baseReflexos : 0;
+            const reflexoFerias = r.ferP > 0 ? (baseReflexos / 3) : 0;
+            let difG = reflexo13;
+            let difF = reflexoFerias;
+            if (!filterAll && (difG + difF) === 0 && r.origem !== 'manual') return;
+            const tr = document.createElement('tr');
+            if (!r.hab) tr.className = 'disabled-row';
+            
+            const alertG = (r.gratP > 0 && r.gratP < baseReflexos) ? 'alert-value' : '';
+            const alertF = (r.ferP > 0 && r.ferP < (baseReflexos / 3)) ? 'alert-value' : '';
+
+            tr.innerHTML = `
+                <td class="no-print" style="text-align:center"><input type="checkbox" ${r.hab ? 'checked' : ''} onchange="toggleRow(${i})"></td>
+                <td style="text-align:center">${r.c}${r.origem === 'manual' ? '<span class="manual-row-badge no-print">Manual</span><button type="button" class="manual-delete-btn no-print" title="Excluir competência manual" onclick="event.stopPropagation(); excluirCompetenciaManual('+i+')">✕</button>' : ''}</td>
+                <td class="${editMode ? 'editable-active' : ''}" contenteditable="${editMode}" onblur="updateVal(${i},'abono',this.innerText)">${fmtNum(r.abono)}</td>
+                <td class="col-auxilio-alimentacao ${editMode ? 'editable-active' : ''}" contenteditable="${editMode}" onblur="updateVal(${i},'auxAlim',this.innerText)">${fmtNum(r.auxAlim || 0)}</td>
+                <td class="${alertG} ${editMode ? 'editable-active' : ''}" contenteditable="${editMode}" onblur="updateVal(${i},'gratP',this.innerText)">${fmtNum(r.gratP)}</td>
+                <td>${r.gratD > 0 ? fmtNum(r.gratD) : '-'}</td>
+                <td style="font-weight:600; color:var(--info)">${difG > 0 ? fmtNum(difG) : '-'}</td>
+                <td class="${alertF} ${editMode ? 'editable-active' : ''}" contenteditable="${editMode}" onblur="updateVal(${i},'ferP',this.innerText)">${fmtNum(r.ferP)}</td>
+                <td>${r.ferD > 0 ? fmtNum(r.ferD) : '-'}</td>
+                <td style="font-weight:600; color:var(--info)">${difF > 0 ? fmtNum(difF) : '-'}</td>
+                <td style="background:var(--row-hover); font-weight:bold">${fmtNum(difG + difF)}</td>`;
+            body.appendChild(tr);
+        });
+        atualizarVisibilidadeColunaAuxilio();
+        calcularTotaisTodasAbas();
+    }
+
+    function abrirModalCompetenciaManual() {
+        document.getElementById('manualCompetencia').value = '';
+        document.getElementById('manualAbono').value = '';
+        document.getElementById('manualAuxilio').value = '';
+        document.getElementById('manualGratP').value = '';
+        document.getElementById('manualFerP').value = '';
+        const chkSegunda = document.getElementById('manualAdicionarSegunda');
+        if (chkSegunda) chkSegunda.checked = false;
+        document.getElementById('modalCompetenciaManual').classList.add('active');
+        setTimeout(() => document.getElementById('manualCompetencia').focus(), 50);
+    }
+
+    function fecharModalCompetenciaManual() {
+        document.getElementById('modalCompetenciaManual').classList.remove('active');
+    }
+
+    function fecharModalCompetenciaManualFora(event) {
+        if (event.target.id === 'modalCompetenciaManual') fecharModalCompetenciaManual();
+    }
+
+    function proximaCompetencia(c) {
+        const [mesStr, anoStr] = c.split('/');
+        const mes = Number(mesStr);
+        const ano = Number(anoStr);
+        const dt = new Date(ano, mes, 1);
+        return String(dt.getMonth() + 1).padStart(2, '0') + '/' + dt.getFullYear();
+    }
+
+    function criarRegistroManual(c, abono, auxExtraido, gratP, ferP) {
+        const auxAlim = incluirAuxilioAlimentacao ? auxExtraido : 0;
+        const baseReflexos = abono + auxAlim;
+        return {
+            c,
+            abono,
+            auxAlimExtraido: auxExtraido,
+            auxAlim,
+            gratP,
+            ferP,
+            pagoVal: 0,
+            hab: true,
+            manualInativa: false,
+            origem: 'manual',
+            gratD: gratP > 0 ? gratP + baseReflexos : 0,
+            ferD: ferP > 0 ? ferP + (baseReflexos / 3) : 0
+        };
+    }
+
+    function adicionarCompetenciaManual() {
+        const compRaw = document.getElementById('manualCompetencia').value.trim();
+        const c = parseMesAnoIndex(compRaw);
+        if (!/^\d{2}\/\d{4}$/.test(c) || Number(c.slice(0,2)) < 1 || Number(c.slice(0,2)) > 12) {
+            alert('Informe a competência no formato MM/AAAA.');
+            return;
+        }
+
+        const abono = parseV(document.getElementById('manualAbono').value);
+        const auxExtraido = parseV(document.getElementById('manualAuxilio').value);
+        const gratP = parseV(document.getElementById('manualGratP').value);
+        const ferP = parseV(document.getElementById('manualFerP').value);
+        const adicionarSegunda = document.getElementById('manualAdicionarSegunda')?.checked === true;
+        const c2 = proximaCompetencia(c);
+
+        const competenciasNovas = [c];
+        if (adicionarSegunda) competenciasNovas.push(c2);
+
+        const repetidas = competenciasNovas.filter((comp, pos, arr) =>
+            arr.indexOf(comp) !== pos || dados.some(r => r.c === comp)
+        );
+        if (repetidas.length) {
+            alert(
+                'Não foi possível inserir porque a(s) competência(s) já existe(m) na tabela: ' +
+                [...new Set(repetidas)].join(', ') +
+                '. Use a edição da linha existente para complementar o valor que estiver faltando.'
+            );
+            return;
+        }
+
+        // Primeira competência: recebe exatamente os valores preenchidos.
+        dados.push(criarRegistroManual(c, abono, auxExtraido, gratP, ferP));
+
+        // Segunda competência opcional: um mês depois, repete apenas o Auxílio.
+        // Abono, 13º Pago e 1/3 Férias Pago ficam zerados para preenchimento posterior.
+        if (adicionarSegunda) {
+            dados.push(criarRegistroManual(c2, 0, auxExtraido, 0, 0));
+        }
+
+        dados.sort((a,b) => {
+            const da=a.c.split('/'), db=b.c.split('/');
+            return new Date(Number(da[1]), Number(da[0])-1) - new Date(Number(db[1]), Number(db[0])-1);
+        });
+
+        // Recalcula a prescrição sem reativar linhas que o usuário já havia inativado.
+        aplicarPrescricao();
+        fecharModalCompetenciaManual();
+    }
+
+    function excluirCompetenciaManual(i) {
+        if (!dados[i] || dados[i].origem !== 'manual') return;
+        if (!confirm('Excluir a competência manual ' + dados[i].c + '?')) return;
+        dados.splice(i, 1);
+        renderApuracao();
+        renderCorrecao();
+        geraParams();
+    }
+
+    function updateVal(i, f, v) { 
+        dados[i][f] = parseV(v);
+        if (dados[i].auxAlimExtraido === undefined) dados[i].auxAlimExtraido = parseFloat(dados[i].auxAlim) || 0;
+        if (f === 'auxAlim') dados[i].auxAlimExtraido = parseV(v);
+        dados[i].auxAlim = incluirAuxilioAlimentacao ? (parseFloat(dados[i].auxAlimExtraido) || 0) : 0;
+        const baseReflexos = (dados[i].abono || 0) + (dados[i].auxAlim || 0);
+        dados[i].gratD = dados[i].gratP > 0 ? dados[i].gratP + baseReflexos : 0;
+        dados[i].ferD = dados[i].ferP > 0 ? dados[i].ferP + (baseReflexos / 3) : 0;
+        renderApuracao(); renderCorrecao();
+    }
+
+    function toggleRow(i) {
+        dados[i].hab = !dados[i].hab;
+        // Diferencia uma inativação manual da habilitação calculada pela prescrição.
+        dados[i].manualInativa = !dados[i].hab;
+        renderApuracao();
+        renderCorrecao();
+        geraParams();
+    }
+    function toggleEdit() { editMode = !editMode; document.getElementById('btnEdit').classList.toggle('active', editMode); renderApuracao(); }
+    function toggleFilter() { filterAll = !filterAll; renderApuracao(); }
+
+    function processarIndices() {
+        const raw = document.getElementById('csvIndices').value.trim();
+        indicesMap = {};
+        
+        if (!raw) {
+            localStorage.removeItem('backupIndices');
+            return renderCorrecao();
+        }
+
+        raw.split('\n').forEach(linha => {
+            let cols = linha.split('\t');
+            if (cols.length >= 4) {
+                let normC = parseMesAnoIndex(cols[0].trim());
+                if (normC.match(/^\d{2}\/\d{4}$/)) {
+                    indicesMap[normC] = { cor: parseV(cols[1]), jur: parseV(cols[2]), sel: parseV(cols[3]) };
+                }
+            }
+        });
+        
+        localStorage.setItem('backupIndices', raw);
+        renderCorrecao();
+    }
+
+    async function carregarIndicesPlanilha(nomeAba, btnElement) {
+        const tituloEl = document.getElementById('tituloCorrecao');
+        if (nomeAba === 'EC113') {
+            tituloEl.value = 'Planilha de Atualização Monetária (CJF) - EC 113/2021';
+        } else if (nomeAba === 'EC136') {
+            tituloEl.value = 'Planilha de Atualização Monetária - EC136/2025';
+        }
+        
+        const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR94jhhyuvlBxSLkhTSHfSJm5lDYxZUmbDIx5VB0TbbCo23rD4QcgG_Ft3Ii9yFnJ3LyKWjLtomgvqy/pub?output=tsv&single=true&gid=";
+        const urls = { 'EC113': baseUrl + '1468370044', 'EC136': baseUrl + '0' };
+        const targetUrl = urls[nomeAba];
+        const textoOriginal = btnElement.innerHTML;
+
+        const proxies = [
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+        ];
+
+        btnElement.innerHTML = '⏳ Conectando...';
+        btnElement.disabled = true;
+        document.getElementById('csvIndices').value = 'Tentando conectar à nuvem...';
+
+        let sucesso = false;
+        for (let i = 0; i < proxies.length; i++) {
+            try {
+                const response = await fetch(proxies[i]);
+                if (!response.ok) throw new Error("Erro no proxy " + (i+1));
+                const texto = await response.text();
+                if (texto.trim().startsWith('<html') || texto.trim().startsWith('<!DOCTYPE')) throw new Error("Retornou HTML.");
+                
+                const primeiraLinha = texto.split('\n')[0].toLowerCase();
+                const numColunas = primeiraLinha.split('\t').length;
+                
+                if (numColunas < 4 || (!primeiraLinha.includes('mês') && !primeiraLinha.includes('ano'))) {
+                    alert(`⚠️ Aviso Amigável: A planilha "${nomeAba}" foi importada, mas a estrutura das colunas parece diferente do padrão esperado.`);
+                }
+
+                document.getElementById('csvIndices').value = texto;
+                processarIndices();
+                sucesso = true;
+                break; 
+            } catch (error) { console.warn(`Tentativa ${i+1} falhou.`); }
+        }
+
+        if (!sucesso) {
+            alert(`Falha ao baixar os dados da aba ${nomeAba}.\n\nO Firewall bloqueou a comunicação. Cole os índices manualmente.`);
+            document.getElementById('csvIndices').value = '';
+        }
+
+        btnElement.innerHTML = textoOriginal;
+        btnElement.disabled = false;
+    }
+
+    function renderCorrecao() {
+        const body = document.getElementById('tableCorrecaoBody');
+        body.innerHTML = '';
+        let showPago = document.getElementById('chkPagamento').checked;
+
+        dados.forEach((r, i) => {
+            const baseReflexos = (r.abono || 0) + (r.auxAlim || 0);
+            let totalHist = (r.gratP > 0 ? baseReflexos : 0) + (r.ferP > 0 ? baseReflexos / 3 : 0);
+            if (!r.hab || (!filterAll && totalHist === 0)) return;
+
+            let idx = indicesMap[r.c] || { cor: 1.0, jur: 0, sel: 0 };
+            let pagoVal = parseFloat(r.pagoVal) || 0;
+            let base = totalHist - pagoVal;
+            if(base < 0) base = 0;
+
+            let principalCorrigido = base * idx.cor;
+            let valJurosMora = principalCorrigido * (idx.jur / 100);
+            let baseSelic = (idx.jur > 0) ? (principalCorrigido + valJurosMora) : principalCorrigido;
+            let valSelic = baseSelic * (idx.sel / 100);
+
+            r.principalCorrigido = principalCorrigido;
+            r.valJurosMora = valJurosMora;
+            r.valSelic = valSelic;
+            r.totalAtualizado = principalCorrigido + valJurosMora + valSelic;
+
+            const tr = document.createElement('tr');
+            let pagoDisplay = showPago ? 'table-cell' : 'none';
+            tr.innerHTML = `<td style="text-align:center">${r.c}</td><td>${fmtNum(totalHist)}</td><td class="col-pago" style="display:${pagoDisplay}"><span class="editable-active" contenteditable="true" onblur="dados[${i}].pagoVal=parseV(this.innerText);renderCorrecao()">${fmtNum(pagoVal)}</span></td><td>${fmtNum(base)}</td><td>${fmtIdx(idx.cor)}</td><td>${fmtNum(principalCorrigido)}</td><td>${fmtNum(idx.jur)}%</td><td>${fmtNum(idx.sel)}%</td><td style="font-weight:bold">${fmtNum(r.totalAtualizado)}</td>`;
+            body.appendChild(tr);
+        });
+
+        document.querySelectorAll('#tblCorrecao thead .col-pago').forEach(el => {
+            el.style.display = showPago ? 'table-cell' : 'none';
+        });
+
+        calcularTotaisTodasAbas();
+    }
+    
+    function calcularTotaisTodasAbas() {
+        let h = 0, ea = 0, ex = 0;
+        let totBrutoAtu = 0, totPrincipalAtu = 0, totJurosMoraAtu = 0, totSelicAtu = 0;
+
+        dados.filter(d => d.hab).forEach(d => {
+            const baseReflexos = (d.abono || 0) + (d.auxAlim || 0);
+            let t = (d.gratP > 0 ? baseReflexos : 0) + (d.ferP > 0 ? baseReflexos / 3 : 0);
+            h += t; 
+            if(t > 0){ if(parseInt(d.c.split('/')[1]) < 2026) ea++; else ex++; }
+            if(d.totalAtualizado) {
+                totBrutoAtu += d.totalAtualizado; totPrincipalAtu += d.principalCorrigido;
+                totJurosMoraAtu += d.valJurosMora; totSelicAtu += d.valSelic;
+            }
+        });
+
+        let hc = parseV(document.getElementById('honContratuais').value);
+        let hs = parseV(document.getElementById('honSucumbencia').value);
+        let fatorParte = (1 - hc/100); let fatorContrato = (hc/100); let fatorSucumb = (hs/100);
+
+        document.getElementById('resBruto').innerText = fmtMoeda(h);
+        document.getElementById('resBrutoAtu').innerText = fmtMoeda(totBrutoAtu);
+        
+        document.getElementById('resParteTotalAtu').innerText = fmtMoeda(totBrutoAtu * fatorParte);
+        document.getElementById('resPartePrin').innerText = fmtMoeda(totPrincipalAtu * fatorParte);
+        document.getElementById('resParteJur').innerText = fmtMoeda(totJurosMoraAtu * fatorParte);
+        document.getElementById('resParteSelic').innerText = fmtMoeda(totSelicAtu * fatorParte);
+        document.getElementById('resPercParte').innerText = (100 - hc).toFixed(1).replace('.0', '');
+
+        document.getElementById('resContratoTotalAtu').innerText = fmtMoeda(totBrutoAtu * fatorContrato);
+        document.getElementById('resContratoPrin').innerText = fmtMoeda(totPrincipalAtu * fatorContrato);
+        document.getElementById('resContratoJur').innerText = fmtMoeda(totJurosMoraAtu * fatorContrato);
+        document.getElementById('resContratoSelic').innerText = fmtMoeda(totSelicAtu * fatorContrato);
+        document.getElementById('resPercContrato').innerText = hc;
+
+        const secSucumbencia = document.getElementById('secSucumbencia');
+        if (hs > 0) {
+            secSucumbencia.style.display = 'block';
+            document.getElementById('resSucumbTotalAtu').innerText = fmtMoeda(totBrutoAtu * fatorSucumb);
+            document.getElementById('resSucumbPrin').innerText = fmtMoeda(totPrincipalAtu * fatorSucumb);
+            document.getElementById('resSucumbJur').innerText = fmtMoeda(totJurosMoraAtu * fatorSucumb);
+            document.getElementById('resSucumbSelic').innerText = fmtMoeda(totSelicAtu * fatorSucumb);
+            document.getElementById('resPercSucumb').innerText = hs;
+        } else {
+            secSucumbencia.style.display = 'none';
+        }
+        
+        document.getElementById('statsBox').innerHTML = `• Exercícios Anteriores (até 2025): <strong>${ea}</strong> | • Exercício Atual (2026): <strong>${ex}</strong>`;
+        
+        document.getElementById('resTotalPrincipal').innerText = fmtMoeda(totPrincipalAtu);
+        document.getElementById('resTotalJuros').innerText = fmtMoeda(totJurosMoraAtu);
+        document.getElementById('resTotalSelic').innerText = fmtMoeda(totSelicAtu);
+    }
+
+    // 🔹 NOVO PADRÃO JSON: CALC_ABONO_NOME_DO_AUTOR
+    function gerarNomeArquivoJSON() {
+        let autorRaw = document.getElementById('procAutor').value.trim();
+        let nomeAutor = autorRaw ? autorRaw.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').replace(/\s+/g, '_').toUpperCase() : '';
+        return nomeAutor ? `CALC_ABONO_${nomeAutor}.json` : `CALC_ABONO.json`;
+    }
+
+    // 🔹 NOVO PADRÃO PDF: PRIMEIRO_E_SEGUNDO_NOME_Calculo_Judicial-Inc.Abono_de_Permanencia
+    function gerarNomeArquivoPDF() {
+        let autorRaw = document.getElementById('procAutor').value.trim();
+        let nomes = autorRaw ? autorRaw.split(/\s+/).slice(0, 2).join(' ').replace(/[^a-zA-ZÀ-ÿ\s]/g, '') : '';
+        nomes = nomes.replace(/\s+/g, '_').toUpperCase();
+        return nomes ? `${nomes}_Calculo_Judicial-Inc.Abono_de_Permanencia` : 'Calculo_Judicial-Inc.Abono_de_Permanencia';
+    }
+
+    async function salvarProjeto() {
+        try {
+            // Snapshot completo do estado atual. A cópia do array evita que
+            // alterações posteriores durante o diálogo de salvamento afetem o conteúdo.
+            const dadosParaSalvar = Array.isArray(dados) ? dados.map(r => ({...r})) : [];
+            const indicesParaSalvar = (indicesMap && typeof indicesMap === 'object')
+                ? {...indicesMap}
+                : {};
+
+            const p = {
+                meta: {
+                    proc: document.getElementById('procNumero')?.value || '',
+                    aut: document.getElementById('procAutor')?.value || '',
+                    cls: document.getElementById('procClasse')?.value || '',
+                    reu: document.getElementById('procReu')?.value || '',
+                    ass: document.getElementById('procAssunto')?.value || '',
+                    aju: document.getElementById('dataAjuizamento')?.value || '',
+                    cit: document.getElementById('dataCitacao')?.value || '',
+                    date: document.getElementById('dataGeracao')?.value || new Date().toISOString(),
+                    honCont: document.getElementById('honContratuais')?.value || '0',
+                    honSuc: document.getElementById('honSucumbencia')?.value || '0',
+                    tituloCorrecao: document.getElementById('tituloCorrecao')?.value || '',
+                    presc: document.getElementById('prescricaoToggle')?.value || '',
+                    param: document.getElementById('txtParametros')?.value || '',
+                    notas: document.getElementById('notasInternas')?.value || '',
+                    incluirAuxilioAlimentacao: !!incluirAuxilioAlimentacao,
+                    sentenca: sentencaAtual ? {...sentencaAtual, textoExtraido: undefined} : null
+                },
+                d: dadosParaSalvar,
+                idx: indicesParaSalvar
+            };
+
+            // JSON.stringify(undefined) poderia resultar em um arquivo sem conteúdo útil.
+            // Aqui exigimos explicitamente um objeto serializado e verificamos seu tamanho.
+            const conteudo = JSON.stringify(p, null, 2);
+            if (typeof conteudo !== 'string' || !conteudo.trim() || conteudo.trim() === 'undefined') {
+                throw new Error('Não foi possível gerar o conteúdo do projeto JSON.');
+            }
+
+            const nomeSugerido = gerarNomeArquivoJSON();
+            const blob = new Blob([conteudo], {type: 'application/json;charset=utf-8'});
+
+            if (blob.size <= 10) {
+                throw new Error('O projeto JSON foi gerado vazio ou incompleto. O salvamento foi interrompido.');
+            }
+
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: nomeSugerido,
+                        types: [{
+                            description: 'Arquivo JSON do Projeto',
+                            accept: {'application/json': ['.json']},
+                        }],
+                    });
+
+                    const writable = await handle.createWritable();
+                    try {
+                        // Usa ArrayBuffer para evitar problemas de escrita de string
+                        // em algumas implementações do File System Access API.
+                        await writable.write(await blob.arrayBuffer());
+                    } finally {
+                        await writable.close();
+                    }
+
+                    mostrarNotificacaoSalvamento(nomeSugerido, blob.size);
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;
+                    console.error('Erro ao salvar com picker, usando fallback:', err);
+                    salvarProjetoFallback(conteudo, nomeSugerido);
+                }
+            } else {
+                salvarProjetoFallback(conteudo, nomeSugerido);
+            }
+        } catch (err) {
+            console.error('Erro ao preparar projeto JSON:', err);
+            alert('Não foi possível salvar o projeto JSON.\n\nMotivo: ' +
+                  (err && err.message ? err.message : 'erro desconhecido.') +
+                  '\n\nNenhum arquivo incompleto foi gerado.');
+        }
+    }
+
+    function salvarProjetoFallback(conteudo, nomeArquivo) {
+        if (typeof conteudo !== 'string' || !conteudo.trim()) {
+            throw new Error('Conteúdo JSON vazio. Salvamento cancelado.');
+        }
+
+        const blob = new Blob([conteudo], {type: 'application/json;charset=utf-8'});
+        if (blob.size <= 10) {
+            throw new Error('Conteúdo JSON vazio ou incompleto. Salvamento cancelado.');
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomeArquivo || 'projeto_calculo.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        mostrarNotificacaoSalvamento(a.download, blob.size);
+    }
+
+    function mostrarNotificacaoSalvamento(nomeArquivo, tamanho) {
+        const kb = Math.max(1, Math.round((tamanho || 0) / 1024));
+        const toast = document.getElementById('toastNotificacao');
+        const conteudoToast = document.getElementById('toastConteudo');
+        if (toast && conteudoToast) {
+            conteudoToast.innerHTML = `<p><strong>Projeto salvo com sucesso.</strong></p><p>${nomeArquivo || 'projeto.json'} — ${kb} KB</p>`;
+            toast.className = 'toast-notification success no-print';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+    }
+
+    function mostrarNotificacaoCarregamento(meta) {
+        const toast = document.getElementById('toastNotificacao');
+        const conteudo = document.getElementById('toastConteudo');
+        let html = '';
+        
+        if (meta?.proc || meta?.aut || meta?.date) {
+            if (meta.proc) html += `<p><strong>Processo:</strong> ${meta.proc}</p>`;
+            if (meta.aut) html += `<p><strong>Parte Autora:</strong> ${meta.aut}</p>`;
+            if (meta.date) {
+                let dataFormatada = meta.date;
+                if (meta.date.includes('T')) dataFormatada = meta.date.split('T')[0];
+                if (dataFormatada.includes('-')) {
+                    const [ano, mes, dia] = dataFormatada.split('-');
+                    dataFormatada = `${dia}/${mes}/${ano}`;
+                }
+                html += `<p><strong>Salvo em:</strong> ${dataFormatada}</p>`;
+            }
+        } else {
+            html = '<p>Dados carregados com sucesso.</p>';
+        }
+        
+        conteudo.innerHTML = html;
+        toast.className = 'toast-notification success no-print';
+        toast.style.display = 'block';
+        setTimeout(() => { fecharToast(); }, 5000);
+    }
+
+    function fecharToast() {
+        const toast = document.getElementById('toastNotificacao');
+        toast.style.display = 'none';
+    }
+
+    function processarArquivoJSON(file) {
+        const r = new FileReader();
+        r.onload = (e) => {
+            try {
+                let texto = String(e.target.result || '').replace(/^\uFEFF/, '').trim();
+
+                // Aceita JSON salvo normalmente e também arquivos que tenham
+                // sido envolvidos acidentalmente por bloco Markdown.
+                if (texto.startsWith('```')) {
+                    texto = texto
+                        .replace(/^```(?:json)?\s*/i, '')
+                        .replace(/\s*```\s*$/i, '')
+                        .trim();
+                }
+
+                if (!texto) {
+                    throw new Error('O arquivo está vazio.');
+                }
+
+                // Um JSON válido do sistema deve começar por um objeto.
+                // Não tenta interpretar HTML, TXT ou o próprio arquivo HTML do cálculo.
+                if (!texto.startsWith('{')) {
+                    throw new Error(
+                        'O arquivo selecionado não é um projeto JSON do cálculo. ' +
+                        'Selecione o arquivo .json gerado pelo botão "Salvar JSON".'
+                    );
+                }
+
+                const j = JSON.parse(texto);
+
+                if (!j || typeof j !== 'object' || Array.isArray(j)) {
+                    throw new Error('O projeto JSON possui estrutura inválida.');
+                }
+
+                if (!Array.isArray(j.d) && !j.meta && !j.idx) {
+                    throw new Error(
+                        'O arquivo é JSON, mas não possui a estrutura esperada de um projeto do cálculo.'
+                    );
+                }
+
+                // Campos personalizados são restaurados DEPOIS de geraParams(),
+                // pois geraParams() recria automaticamente o texto padrão.
+                let parametroSalvo;
+                let notasSalvas;
+                let tituloCorrecaoSalvo;
+
+                if (j.meta) {
+                    if (document.getElementById('procNumero')) document.getElementById('procNumero').value = j.meta.proc || '';
+                    if (document.getElementById('procAutor')) document.getElementById('procAutor').value = j.meta.aut || '';
+                    if (document.getElementById('procClasse')) document.getElementById('procClasse').value = j.meta.cls || '';
+                    if (document.getElementById('procReu')) document.getElementById('procReu').value = j.meta.reu || '';
+                    if (document.getElementById('procAssunto')) document.getElementById('procAssunto').value = j.meta.ass || '';
+                    
+                    if (document.getElementById('dataAjuizamento')) {
+                        let ajuVal = j.meta.aju || '';
+                        if (ajuVal.includes('T')) ajuVal = ajuVal.split('T')[0]; 
+                        document.getElementById('dataAjuizamento').value = ajuVal;
+                    }
+
+                    if (document.getElementById('dataCitacao')) document.getElementById('dataCitacao').value = j.meta.cit || '';
+                    
+                    if (j.meta.honCont) document.getElementById('honContratuais').value = j.meta.honCont;
+                    if (j.meta.honSuc) document.getElementById('honSucumbencia').value = j.meta.honSuc;
+                    tituloCorrecaoSalvo = j.meta.tituloCorrecao;
+                    if (j.meta.presc) document.getElementById('prescricaoToggle').value = j.meta.presc;
+                    parametroSalvo = j.meta.param;
+                    notasSalvas = j.meta.notas;
+                }
+                
+                setInitialDate();
+
+                incluirAuxilioAlimentacao = j.meta && typeof j.meta.incluirAuxilioAlimentacao === 'boolean' ? j.meta.incluirAuxilioAlimentacao : false;
+                const cbAux = document.getElementById('incluirAuxilioAlimentacao');
+                if (cbAux) cbAux.checked = incluirAuxilioAlimentacao;
+                dados = (j.d || []).map(r => {
+                    const extraido = r.auxAlimExtraido !== undefined ? parseFloat(r.auxAlimExtraido) || 0 : (parseFloat(r.auxAlim) || 0);
+                    return { ...r, auxAlimExtraido: extraido, auxAlim: incluirAuxilioAlimentacao ? extraido : 0 };
+                });
+                indicesMap = j.idx || {};
+                
+                if (Object.keys(indicesMap).length > 0) {
+                    let rawIdx = "Mês/Ano\tCorreção Monetária\t% Juros de mora\t% SELIC\n";
+                    for (let key in indicesMap) {
+                        rawIdx += `${key}\t${fmtIdx(indicesMap[key].cor)}\t${fmtNum(indicesMap[key].jur)}\t${fmtNum(indicesMap[key].sel)}\n`;
+                    }
+                    document.getElementById('csvIndices').value = rawIdx;
+                    localStorage.setItem('backupIndices', rawIdx);
+                }
+
+                renderApuracao();
+                renderCorrecao();
+                geraParams();
+
+                // IMPORTANTE: geraParams() sobrescreve o texto padrão.
+                // Por isso, os conteúdos salvos pelo usuário são restaurados agora.
+                if (parametroSalvo !== undefined) {
+                    document.getElementById('txtParametros').value = parametroSalvo;
+                }
+                if (notasSalvas !== undefined) {
+                    document.getElementById('notasInternas').value = notasSalvas;
+                }
+                if (tituloCorrecaoSalvo !== undefined) {
+                    document.getElementById('tituloCorrecao').value = tituloCorrecaoSalvo;
+                }
+                sentencaAtual = j.meta?.sentenca || null;
+                renderSentencaRecebida();
+
+                mostrarNotificacaoCarregamento(j.meta);
+            } catch (error) {
+                console.error('Erro ao carregar projeto JSON:', error);
+                const nome = file && file.name ? `\\n\\nArquivo: ${file.name}` : '';
+                alert(
+                    'Não foi possível carregar este arquivo como projeto JSON.' +
+                    nome +
+                    `\\n\\nMotivo: ${error && error.message ? error.message : 'JSON inválido.'}` +
+                    '\\n\\nUse o botão "Salvar JSON" para gerar o arquivo de projeto.'
+                );
+            }
+        };
+        r.readAsText(file);
+    }
+
+    function carregarDoInput(inputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
+        processarArquivoJSON(file);
+        inputElement.value = '';
+    }
+
+    const dragOverlay = document.getElementById('dragOverlay');
+
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.types.includes("Files")) {
+            dragOverlay.classList.add('active');
+        }
+    });
+
+    window.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        if (e.clientX === 0 && e.clientY === 0) {
+            dragOverlay.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragOverlay.classList.remove('active');
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.name.toLowerCase().endsWith('.json')) {
+                processarArquivoJSON(file);
+            } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                processarSentencaArquivo(file);
+            } else {
+                alert('Formato inválido! Arraste um projeto (.json) ou uma sentença (.pdf).');
+            }
+        }
+    });
+
+    // ================================================================
+    // RECEBIMENTO E LEITURA DA SENTENÇA
+    // ================================================================
+    const escHtml = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    const normalizarTextoSentenca = (s) => String(s || '').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    const primeiroMatch = (texto, regexes) => { for (const re of regexes) { const m=texto.match(re); if(m&&m[1]) return m[1].trim().replace(/\n/g,' '); } return ''; };
+    const dataBRParaISO = (d) => { const m=String(d||'').match(/(\d{2})[\/.-](\d{2})[\/.-](\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
+
+    function capturarCampoSentenca(texto, rotulo, proximos) {
+        const prox = proximos.join('|');
+        const re = new RegExp(rotulo + `\\s*:\\s*(.*?)\\s*(?=${prox}|$)`, 'i');
+        const m = texto.match(re);
+        return m && m[1] ? m[1].trim() : '';
+    }
+
+    // O PJe pode apresentar as partes de duas formas:
+    // 1) AUTOR: NOME / REU: NOME;
+    // 2) NOME (AUTOR) ... NOME (REU), na tela de documentos/processo.
+    // A leitura tenta primeiro o formato explícito e, se não encontrar,
+    // utiliza o marcador de polo para evitar confundir advogado com réu.
+    function extrairPartesSentenca(texto) {
+        let autor = capturarCampoSentenca(texto, 'AUTOR', ['ADVOGADO', 'REU', 'RÉU', 'Documentos', 'Partes']);
+        let reu = capturarCampoSentenca(texto, 'REU|RÉU', ['SENTENÇA', 'Documentos', 'Partes']);
+
+        // Formato comum do cabeçalho PJe: "NOME (AUTOR) ... NOME (REU)".
+        if (!autor) {
+            // Cabeçalho PJe em tabela: a parte aparece na própria linha,
+            // imediatamente antes do marcador "(AUTOR)".
+            const m = texto.match(/(?:^|\n)\s*([^\n\r]{2,220}?)\s*\(\s*AUTOR\s*\)/i);
+            if (m && m[1]) autor = m[1].trim();
+        }
+        if (!reu) {
+            // PADRÃO REAL DO PJe: o polo aparece ANTES do marcador final.
+            // Ex.: "UNIVERSIDADE FEDERAL DE PERNAMBUCO - UFPE (REU)".
+            // A extração de PDF pode, entretanto, remover a quebra de linha.
+            // Por isso fazemos duas tentativas: primeiro pela linha e depois
+            // pelo trecho imediatamente posterior ao último marcador de parte.
+            const mLinha = texto.match(/(?:^|\n)\s*([^\n\r]{2,220}?)\s*\(\s*R(?:E|É)U\s*\)/i);
+            if (mLinha && mLinha[1]) {
+                reu = mLinha[1].trim();
+            }
+
+            // Fallback robusto para PDF em que as linhas da tabela são unidas:
+            // pega o texto depois de "(ADVOGADO)", "(AUTOR)" ou outro
+            // marcador de parte e antes de "(REU)".
+            if (!reu) {
+                const mTabela = texto.match(/(?:\(\s*(?:ADVOGADO|AUTOR|PARTE)\s*\)|(?:^|\n))\s*([^\n\r()]{2,220}?)\s*\(\s*R(?:E|É)U\s*\)/i);
+                if (mTabela && mTabela[1]) reu = mTabela[1].trim();
+            }
+
+            // Último fallback: procura qualquer ocorrência de "(REU)" e
+            // extrai somente o texto imediatamente anterior, interrompendo
+            // em marcadores típicos da tabela do PJe.
+            if (!reu) {
+                const pos = texto.search(/\(\s*R(?:E|É)U\s*\)/i);
+                if (pos >= 0) {
+                    let antes = texto.slice(Math.max(0, pos - 300), pos);
+                    antes = antes.split(/\(\s*(?:AUTOR|ADVOGADO|PARTE)\s*\)/i).pop();
+                    antes = antes.replace(/^.*(?:Partes|Documentos)\s*/i, '');
+                    reu = antes.trim();
+                }
+            }
+
+            if (reu) {
+                reu = reu.replace(/\s+/g, ' ').trim();
+                // Nunca deixar o nome do autor ou do advogado entrar no réu.
+                reu = reu.replace(/^.*?\(\s*AUTOR\s*\)\s*/i, '').trim();
+                reu = reu.replace(/^.*?\(\s*ADVOGADO\s*\)\s*/i, '').trim();
+            }
+        }
+
+        // Formato textual da sentença: "REU: UNIVERSIDADE...".
+        if (!reu) {
+            const m = texto.match(/(?:^|\n)\s*R(?:E|É)U\s*:\s*([^\n]+)/i);
+            if (m && m[1]) reu = m[1].trim();
+        }
+        return {autor, reu};
+    }
+
+    function extrairSentenca(texto, nomeArquivo, paginas) {
+        const t=normalizarTextoSentenca(texto);
+        const processo=primeiroMatch(t,[/(?:Número|Processo)\s*:\s*(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/i,/(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/]);
+        const classe=capturarCampoSentenca(t,'Classe',['Órgão julgador','Orgao julgador','Última distribuição','Ultima distribuição','Valor da causa']);
+        const partes=extrairPartesSentenca(t);
+        const autor=partes.autor;
+        const reu=partes.reu;
+        const orgao=capturarCampoSentenca(t,'Órgão julgador|Orgao julgador',['Última distribuição','Ultima distribuição','Valor da causa','Assuntos']);
+        // No cabeçalho do PJe, a data de ajuizamento para este módulo corresponde
+        // à data indicada em "Última distribuição". Capturamos exclusivamente
+        // a data que vem após esse rótulo, sem confundir com a data da sentença.
+        const dataAjuizamento=primeiroMatch(t,[/(?:Última distribuição|Ultima distribuição)\s*:\s*(\d{2}\/\d{2}\/\d{4})/i]);
+        const dataSentenca=primeiroMatch(t,[/(?:Assinado eletronicamente por:[^\n]*?-\s*)(\d{2}\/\d{2}\/\d{4})/i]);
+        const prescricao=/prescri(?:ção|cao)\s+quinquenal|últimos\s+cinco\s+anos|ultimos\s+cinco\s+anos/i.test(t);
+        const objeto={abono:/abono\s+de\s+perman[eê]ncia/i.test(t),auxilio:/aux[ií]lio[- ]?alimenta(?:ção|cao)/i.test(t),decimo:/13[ºo]?\s*(?:sal[aá]rio|salário)|gratifica(?:ção|cao)\s+natalina/i.test(t),ferias:/adicional\s+de\s+f[eé]rias|ter[cç]o\s+constitucional/i.test(t)};
+        const correcao={ipcae:/IPCA[- ]?E/i.test(t),ipca:/\bIPCA\b/i.test(t),poupança:/caderneta\s+de\s+poupan[cç]a/i.test(t),selic:/\bSELIC\b/i.test(t),ec113:/EC\s*(?:n[ºo]\s*)?113\/2021|Emenda\s+Constitucional\s+n[ºo]?\s*113\/2021/i.test(t),ec136:/EC\s*(?:n[ºo]\s*)?136\/2025|Emenda\s+Constitucional\s+n[ºo]?\s*136\/2025/i.test(t),dataTransicao:/08\/12\/2021/.test(t),trecho:''};
+        const idx=t.search(/correção monetária|correcao monetaria/i); if(idx>=0) correcao.trecho=t.slice(Math.max(0,idx-80),Math.min(t.length,idx+900)).replace(/\s+/g,' ').trim();
+        const regras=[];
+        if(correcao.ipcae && /07\/12\/2021|até\s+07\/12\/2021|ate\s+07\/12\/2021/i.test(t)) regras.push('Até 07/12/2021: correção monetária pelo IPCA-E.'); else if(correcao.ipcae) regras.push('A sentença menciona IPCA-E, mas o termo temporal específico não foi identificado com segurança.');
+        if(correcao.poupança && /cita[cç][aã]o/i.test(t)) regras.push('Juros de mora pela caderneta de poupança, com referência à citação.'); else if(correcao.poupança) regras.push('A sentença menciona juros pela caderneta de poupança.');
+        if(correcao.selic && /08\/12\/2021|ap[oó]s\s+esta\s+data|ap[oó]s\s+essa\s+data/i.test(t)) regras.push('A partir de 08/12/2021: SELIC, conforme texto identificado na sentença.'); else if(correcao.selic) regras.push('A sentença menciona SELIC.');
+        if(correcao.ipca && correcao.ec136) regras.push('A sentença também menciona IPCA e EC 136/2025.');
+        return {arquivo:nomeArquivo||'',paginas:paginas||0,textoExtraido:t,processo,classe,autor,reu,orgao,dataAjuizamento,dataAjuizamentoISO:dataBRParaISO(dataAjuizamento),dataSentenca,dataSentencaISO:dataBRParaISO(dataSentenca),prescricao,objeto,correcao,regras,status:'lido'};
+    }
+
+    async function extrairTextoPDF(file) {
+        if(!window.pdfjsLib) throw new Error('O leitor de PDF não foi carregado. Verifique a conexão com a internet e recarregue a página.');
+        const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise; let texto='';
+        for(let n=1;n<=pdf.numPages;n++){ const page=await pdf.getPage(n); const content=await page.getTextContent(); texto+=`\n[PÁGINA ${n}]\n`+content.items.map(i=>i.str||'').join(' ')+'\n'; }
+        return {texto:normalizarTextoSentenca(texto),paginas:pdf.numPages};
+    }
+    function setSentencaStatus(msg,tipo=''){const el=document.getElementById('sentencaStatus');el.textContent=msg;el.className=`sentenca-status active ${tipo}`;}
+    function renderSentencaRecebida(){
+        const resultado=document.getElementById('sentencaResultado'),resumo=document.getElementById('sentencaResumo'),badges=document.getElementById('sentencaBadges'),botoes=document.getElementById('sentencaBotoes'); if(!resultado)return;
+        if(!sentencaAtual){resultado.classList.remove('active');document.getElementById('sentencaStatus').className='sentenca-status';resumo.innerHTML=badges.innerHTML=botoes.innerHTML='';return;}
+        const s=sentencaAtual,o=s.objeto||{}, badge=(x,ok)=>`<span class="sentenca-badge ${ok?'ok':'warn'}">${ok?'✓':'⚠'} ${escHtml(x)}</span>`;
+        resultado.classList.add('active'); badges.innerHTML=[badge(s.processo?'Processo identificado':'Processo não identificado',!!s.processo),badge(s.autor?'Autor identificado':'Autor não identificado',!!s.autor),badge(s.reu?'Polo passivo (Réu) identificado':'Polo passivo (Réu) não identificado',!!s.reu),badge(s.regras.length?'Regras de correção encontradas':'Correção não determinada',!!s.regras.length)].join('');
+        resumo.innerHTML=[['Processo',s.processo],['Classe',s.classe],['Parte autora',s.autor],['Polo passivo (Réu)',s.reu],['Órgão julgador',s.orgao],['Data da sentença',s.dataSentenca],['Prescrição',s.prescricao?'Quinquenal identificada':'Não identificada'],['Objeto',[o.abono?'Abono de permanência':'',o.auxilio?'Auxílio-alimentação':'',o.decimo?'13º salário':'',o.ferias?'Adicional de férias':''].filter(Boolean).join(' + ')]] .filter(x=>x[1]).map(x=>`<div class="sentenca-item"><strong>${escHtml(x[0])}:</strong> ${escHtml(x[1])}</div>`).join('');
+        botoes.innerHTML='<button class="btn btn-outline" style="padding:7px 11px;font-size:.78em" onclick="abrirModalRevisaoSentenca()">🔎 Revisar leitura</button><button class="btn btn-primary" style="padding:7px 11px;font-size:.78em" onclick="aplicarDadosSentenca()">✓ Aplicar dados</button>';
+        setSentencaStatus(`PDF: ${s.arquivo} · ${s.paginas} página(s) · leitura concluída.`,'ok');
+    }
+    async function processarSentencaArquivo(file){
+        if(!file)return;
+        setSentencaStatus('⏳ Lendo o PDF da sentença...');
+        try{
+            const r=await extrairTextoPDF(file);
+            if(!r.texto||r.texto.replace(/\s/g,'').length<80){
+                sentencaAtual=null;
+                document.getElementById('sentencaResultado').classList.remove('active');
+                setSentencaStatus('O PDF não apresentou texto pesquisável suficiente. Este arquivo aparenta ser uma digitalização/imagem e não será interpretado automaticamente.','warn');
+                return;
+            }
+            sentencaAtual=extrairSentenca(r.texto,file.name,r.paginas);
+            renderSentencaRecebida();
+            abrirModalRevisaoSentenca();
+        }catch(e){console.error(e);setSentencaStatus(`Não foi possível ler a sentença: ${e.message||e}`,'error');}
+    }
+    async function receberSentenca(input){
+        const file=input.files&&input.files[0];
+        if(!file)return;
+        if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){setSentencaStatus('Selecione um arquivo PDF de sentença.','error');input.value='';return;}
+        try{await processarSentencaArquivo(file);}finally{input.value='';}
+    }
+
+    function abrirModalRevisaoSentenca(){if(!sentencaAtual)return;const s=sentencaAtual,o=s.objeto||{};const linhas=[['Processo',s.processo],['Classe',s.classe],['Parte autora',s.autor],['Polo passivo (Réu)',s.reu],['Órgão julgador',s.orgao],['Última distribuição / Data de ajuizamento',s.dataAjuizamento],['Data da sentença',s.dataSentenca],['Prescrição',s.prescricao?'Quinquenal identificada na sentença':'Não identificada automaticamente'],['Objeto',[o.abono?'Abono de permanência':'',o.auxilio?'Auxílio-alimentação':'',o.decimo?'13º salário':'',o.ferias?'Adicional de férias':''].filter(Boolean).join(', ')||'Não identificado'],['Correção identificada',s.regras.join(' ')||'Não identificada com segurança']];document.getElementById('revisaoSentencaConteudo').innerHTML='<p><strong>Revise as informações antes de aplicar.</strong></p><div class="correcao-sentenca-card">'+linhas.filter(x=>x[1]).map(x=>`<div class="linha"><span class="rotulo">${escHtml(x[0])}</span><span class="valor">${escHtml(x[1])}</span></div>`).join('')+'</div><div class="sentenca-fonte">Fonte: <strong>'+escHtml(s.arquivo)+'</strong>. A leitura automática não substitui a conferência do título judicial.</div>';document.getElementById('modalRevisaoSentenca').classList.add('active');}
+    function aplicarDadosSentenca(){if(!sentencaAtual)return;const s=sentencaAtual,o=s.objeto||{};if(o.auxilio){incluirAuxilioAlimentacao=true;const cbAux=document.getElementById('incluirAuxilioAlimentacao');if(cbAux)cbAux.checked=true;dados.forEach(r=>{if(r.auxAlimExtraido===undefined)r.auxAlimExtraido=parseFloat(r.auxAlim)||0;r.auxAlim=r.auxAlimExtraido||0;});}if(s.processo){document.getElementById('procNumero').value=s.processo;mascaraCNJ(document.getElementById('procNumero'));}if(s.classe)document.getElementById('procClasse').value=s.classe;if(s.autor)document.getElementById('procAutor').value=s.autor;if(s.reu)document.getElementById('procReu').value=s.reu;if(s.dataAjuizamento){const campoAju=document.getElementById('dataAjuizamento');campoAju.value=s.dataAjuizamentoISO||dataBRParaISO(s.dataAjuizamento);campoAju.dispatchEvent(new Event('change',{bubbles:true}));}if(s.prescricao)document.getElementById('prescricaoToggle').value='sim';const objetos=[o.abono?'abono de permanência':'',o.auxilio?'auxílio-alimentação':'',o.decimo?'13º salário':'',o.ferias?'adicional de 1/3 de férias':''].filter(Boolean);if(objetos.length)document.getElementById('procAssunto').value=`Apuração das diferenças decorrentes da inclusão de ${objetos.join(' e ')} na base de cálculo das verbas reconhecidas no título judicial.`;fecharModalRevisaoSentenca();atualizarModalCorrecaoSentenca();setSentencaStatus('✓ Dados da sentença aplicados aos campos do cálculo. As regras de correção permanecem informativas até conferência.','ok');}
+    function atualizarModalCorrecaoSentenca(){const el=document.getElementById('correcaoSentencaConteudo');if(!sentencaAtual){el.innerHTML='<p>Nenhuma sentença foi recebida ainda.</p>';return;}const s=sentencaAtual,c=s.correcao||{},cards=[];if(c.ipcae)cards.push(['Correção monetária',c.dataTransicao==='08/12/2021' || s.regras.some(r=>r.includes('Até 07/12/2021'))?'IPCA-E até 07/12/2021':'IPCA-E (período específico não identificado automaticamente)']);if(c.poupança)cards.push(['Juros de mora','Caderneta de poupança']);if(c.selic)cards.push(['Atualização após transição',c.dataTransicao==='08/12/2021'?'SELIC a partir de 08/12/2021':'SELIC mencionada na sentença']);if(c.ec113)cards.push(['Fundamento identificado','EC 113/2021']);if(c.ec136)cards.push(['Fundamento identificado','EC 136/2025']);el.innerHTML='<p>As informações abaixo foram <strong>extraídas do texto da sentença recebida</strong>. Elas não alteram automaticamente os índices da planilha.</p><div class="correcao-sentenca-card">'+(cards.length?cards.map(x=>`<div class="linha"><span class="rotulo">${escHtml(x[0])}</span><span class="valor">${escHtml(x[1])}</span></div>`).join(''):'<p>Não foi identificada regra de correção monetária com segurança suficiente.</p>')+'</div>'+(s.regras.length?'<h4>Leitura do título</h4><ul>'+s.regras.map(r=>`<li>${escHtml(r)}</li>`).join('')+'</ul>':'')+(s.correcao.trecho?`<div class="sentenca-fonte"><strong>Trecho contextual:</strong> ${escHtml(s.correcao.trecho)}</div>`:'')+'<div class="sentenca-fonte">⚠️ <strong>Segurança:</strong> o motor matemático e os índices já carregados não são substituídos silenciosamente.</div>';}
+    function abrirModalCorrecaoSentenca(){atualizarModalCorrecaoSentenca();document.getElementById('modalCorrecaoSentenca').classList.add('active');}function fecharModalCorrecaoSentenca(){document.getElementById('modalCorrecaoSentenca').classList.remove('active');}function fecharModalForaCorrecaoSentenca(e){if(e.target.id==='modalCorrecaoSentenca')fecharModalCorrecaoSentenca();}function fecharModalRevisaoSentenca(){document.getElementById('modalRevisaoSentenca').classList.remove('active');}function fecharModalForaRevisaoSentenca(e){if(e.target.id==='modalRevisaoSentenca')fecharModalRevisaoSentenca();}
+
+    // ===== RECEBIMENTO INTEGRADO DAS FICHAS FINANCEIRAS =====
+    let fichasIntegradas = [];
+    let pdfFichasUnificado = null;
+    let pdfFichasUnificadoNome = 'Fichas_Financeiras_Unificadas.pdf';
+
+    function setFichasStatus(msg, tipo='') {
+        const el = document.getElementById('fichasStatus');
+        el.textContent = msg || '';
+        el.className = `fichas-status ${msg ? 'active ' + tipo : ''}`;
+    }
+
+    function adicionarFichasIntegradas(input) {
+        const files = Array.from(input.files || []);
+        files.forEach(file => {
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                fichasIntegradas.push(file);
+            }
+        });
+        input.value = '';
+        renderizarListaFichasIntegradas();
+        setFichasStatus(fichasIntegradas.length ? `${fichasIntegradas.length} ficha(s) selecionada(s). Você pode reordenar antes de unir.` : '');
+    }
+
+    function removerFichaIntegrada(indice) {
+        fichasIntegradas.splice(indice, 1);
+        renderizarListaFichasIntegradas();
+    }
+
+    function limparFichasIntegradas() {
+        fichasIntegradas = [];
+        pdfFichasUnificado = null;
+        document.getElementById('fichasResultadoAcoes').innerHTML = '';
+        renderizarListaFichasIntegradas();
+        setFichasStatus('');
+    }
+
+    function renderizarListaFichasIntegradas() {
+        const lista = document.getElementById('fichasLista');
+        const itens = document.getElementById('fichasItens');
+        const cont = document.getElementById('fichasContagem');
+        if (!fichasIntegradas.length) {
+            lista.classList.remove('active');
+            itens.innerHTML = '';
+            cont.textContent = '0 arquivos';
+            return;
+        }
+        lista.classList.add('active');
+        itens.innerHTML = fichasIntegradas.map((f, i) => `<div class="ficha-item" data-index="${i}"><span class="ficha-handle">≡</span><span class="ficha-num">${i+1}.</span><span class="ficha-name" title="${escHtml(f.name)}">${escHtml(f.name)}</span><button type="button" class="ficha-remove" onclick="removerFichaIntegrada(${i})" title="Remover">×</button></div>`).join('');
+        cont.textContent = `${fichasIntegradas.length} arquivo(s) · a ordem acima será usada na união`;
+    }
+
+    function inicializarOrdenacaoFichasIntegradas() {
+        const el = document.getElementById('fichasItens');
+        if (!el || !window.Sortable || el.dataset.sortableInicializado) return;
+        new Sortable(el, {
+            animation: 150,
+            handle: '.ficha-handle',
+            onEnd: evt => {
+                if (evt.oldIndex === evt.newIndex) return;
+                const movido = fichasIntegradas.splice(evt.oldIndex, 1)[0];
+                fichasIntegradas.splice(evt.newIndex, 0, movido);
+                renderizarListaFichasIntegradas();
+            }
+        });
+        el.dataset.sortableInicializado = '1';
+    }
+
+    async function unirEExtrairFichas() {
+        if (fichasIntegradas.length < 1) {
+            setFichasStatus('Selecione pelo menos uma ficha PDF.', 'warn');
+            return;
+        }
+        if (!window.PDFLib) {
+            setFichasStatus('A biblioteca de união de PDFs não foi carregada. Verifique a conexão e recarregue a página.', 'error');
+            return;
+        }
+        setFichasStatus('⏳ Unificando as fichas na ordem selecionada...', '');
+        try {
+            const pdfDocFinal = await PDFLib.PDFDocument.create();
+            for (const file of fichasIntegradas) {
+                const pdfCarregado = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+                const paginas = await pdfDocFinal.copyPages(pdfCarregado, pdfCarregado.getPageIndices());
+                paginas.forEach(p => pdfDocFinal.addPage(p));
+            }
+            const pdfBytes = await pdfDocFinal.save();
+            pdfFichasUnificado = new Blob([pdfBytes], {type:'application/pdf'});
+            pdfFichasUnificadoNome = 'Fichas_Financeiras_Unificadas.pdf';
+            setFichasStatus(`✓ ${fichasIntegradas.length} ficha(s) unificada(s). Agora escolha o modelo para a extração.`, 'ok');
+            document.getElementById('fichasResultadoAcoes').innerHTML = '';
+            abrirModalModeloFichaIntegrada();
+        } catch (e) {
+            console.error(e);
+            pdfFichasUnificado = null;
+            setFichasStatus('Não foi possível unir os PDFs. Verifique se algum arquivo está corrompido ou protegido por senha.', 'error');
+        }
+    }
+
+    function abrirModalModeloFichaIntegrada() {
+        const el = document.getElementById('modalModeloFichaIntegrada');
+        document.getElementById('modeloFichaStatus').textContent = '';
+
+        // Se a sentença já foi recebida e o texto identificou o
+        // Auxílio-Alimentação como objeto do título, a opção deve
+        // aparecer PRÉ-MARCADA antes da escolha do modelo da ficha.
+        // Isso independe de o usuário ter clicado anteriormente em
+        // "Aplicar dados" na sentença.
+        const auxilioDeterminado = !!(sentencaAtual && sentencaAtual.objeto && sentencaAtual.objeto.auxilio);
+        const cbAux = document.getElementById('modeloIncluirAuxilio');
+        if (cbAux) cbAux.checked = auxilioDeterminado;
+        if (auxilioDeterminado) incluirAuxilioAlimentacao = true;
+
+        el.classList.add('active');
+    }
+    function fecharModalModeloFichaIntegrada() { document.getElementById('modalModeloFichaIntegrada').classList.remove('active'); }
+    function fecharModalModeloFichaIntegradaFora(e) { if (e.target.id === 'modalModeloFichaIntegrada') fecharModalModeloFichaIntegrada(); }
+
+    // ================================================================
+    // MOTOR DE EXTRAÇÃO REFEITO — FICHA NOVA
+    //
+    // Regra estrutural: a coluna TOTAL NUNCA é uma competência.
+    // O parser não depende da quantidade de números encontrados na linha.
+    // Ele identifica as coordenadas reais das colunas mensais no cabeçalho
+    // e associa cada valor à coluna pelo eixo X do PDF.
+    // ================================================================
+
+    async function lerPDFFichasIntegrado(file) {
+        if (!window.pdfjsLib) throw new Error('O leitor de PDF não foi carregado.');
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        const linhas = [];
+        const paginasEstruturadas = [];
+
+        for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const tc = await page.getTextContent();
+            const itens = (tc.items || []).map((item, ordem) => ({
+                str: String(item.str || '').trim(),
+                x: Number(item.transform?.[4] || 0),
+                y: Number(item.transform?.[5] || 0),
+                width: Number(item.width || 0),
+                height: Math.abs(Number(item.height || item.transform?.[3] || 0)),
+                ordem
+            })).filter(i => i.str);
+
+            const grupos = [];
+            const toleranciaY = 2.5;
+            const ordenadosY = [...itens].sort((a,b) => b.y - a.y || a.x - b.x);
+
+            for (const item of ordenadosY) {
+                let grupo = grupos.find(g => Math.abs(g.y - item.y) <= toleranciaY);
+                if (!grupo) {
+                    grupo = { y: item.y, itens: [] };
+                    grupos.push(grupo);
+                }
+                grupo.itens.push(item);
+            }
+
+            grupos.sort((a,b) => b.y - a.y);
+            const rows = grupos.map(g => {
+                const rs = [...g.itens].sort((a,b) => a.x - b.x || a.ordem - b.ordem);
+                return {
+                    y: g.y,
+                    itens: rs,
+                    texto: rs.map(i => i.str).join(' ').replace(/\s+/g,' ').trim(),
+                    pagina: p
+                };
+            }).filter(r => r.texto);
+
+            paginasEstruturadas.push({pagina:p, itens, rows});
+            rows.forEach(r => linhas.push({texto:r.texto, pagina:p}));
+        }
+
+        // Compatibilidade: os dois motores continuam recebendo as linhas,
+        // mas o novo motor utiliza também a estrutura espacial.
+        linhas._paginasEstruturadas = paginasEstruturadas;
+        return linhas;
+    }
+
+    const MESES_FI = {JAN:'01',FEV:'02',MAR:'03',ABR:'04',MAI:'05',JUN:'06',JUL:'07',AGO:'08',SET:'09',OUT:'10',NOV:'11',DEZ:'12'};
+    const RE_INICIO_FI = /Siape\s*-\s*Sistema Integrado de Administracao de Recursos Humanos/i;
+    const RE_FIM_FI = /TOTAL\s+L[IÍ]QUIDO/i;
+    const RE_ANO_FI = /Ficha Financeira referente a:\s*(\d{4})/i;
+    const RE_VALOR_FI = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
+    const RE_VALOR_NOVA_FI = /^-?\d{1,3}(?:\.\d{3})*,\d{2}$/;
+
+    function limparTexto(txt) {
+        if (!txt) return '';
+        // Não reconverte UTF-16 para UTF-8 artificialmente: o pdf.js já entrega
+        // Unicode. Essa conversão era capaz de corromper acentos e nomes de rubricas.
+        return String(txt).replace(/[\uFFFD]/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function limparDescricaoRubricaNova(txt) {
+        let d = limparTexto(txt).replace(/\s+/g,' ').trim();
+        // As células de tipo podem aparecer junto à descrição na extração
+        // textual. Elas não fazem parte do nome da rubrica.
+        d = d.replace(/^(RENDIMENTOS|DESCONTOS)\s+/i, '').trim();
+        return d;
+    }
+
+    function parseValorFinanceiroNova(txt) {
+        if (txt == null) return null;
+        const s = String(txt).trim();
+        if (!RE_VALOR_NOVA_FI.test(s)) return null;
+        const n = Number(s.replace(/\./g,'').replace(',','.'));
+        return Number.isFinite(n) ? n : null;
+    }
+
+    function normalizarMesHeader(txt) {
+        const t = String(txt || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        for (const m of Object.keys(MESES_FI)) {
+            if (new RegExp('^' + m + '$').test(t)) return m;
+        }
+        return null;
+    }
+
+    function encontrarAnoReferenciaPagina(rows) {
+        // Prioridade absoluta para o campo ANO REFERÊNCIA, evitando confundir
+        // o ano de referência com o ano da data de emissão do documento.
+        for (let i = 0; i < Math.min(rows.length, 35); i++) {
+            const t = rows[i].texto.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+            if (t.includes('ANO REFERENCIA')) {
+                const mesmo = t.match(/ANO REFERENCIA[^0-9]{0,40}(19\d{2}|20\d{2})/);
+                if (mesmo) return Number(mesmo[1]);
+                for (let j=i+1; j<Math.min(i+5, rows.length); j++) {
+                    const m = rows[j].texto.match(/\b(19\d{2}|20\d{2})\b/);
+                    if (m) return Number(m[1]);
+                }
+            }
+        }
+        // Fallback: procurar o ano mais próximo da região superior da ficha,
+        // mas ignorando anos claramente associados à data de emissão quando possível.
+        for (let i = 0; i < Math.min(rows.length, 25); i++) {
+            const m = rows[i].texto.match(/\b(19\d{2}|20\d{2})\b/);
+            if (m) return Number(m[1]);
+        }
+        return null;
+    }
+
+    function encontrarCabecalhoMensal(rows) {
+        for (let i=0; i<rows.length; i++) {
+            const row = rows[i];
+            const meses = row.itens
+                .map(item => ({mes: normalizarMesHeader(item.str), item}))
+                .filter(x => x.mes);
+
+            if (meses.length < 3) continue;
+
+            const texto = row.texto.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+            const pareceCabecalho = texto.includes('DISCRIMINACAO') || texto.includes('TIPO');
+            if (!pareceCabecalho) continue;
+
+            const colunas = meses.map(x => ({
+                mes: x.mes,
+                xInicio: x.item.x,
+                xCentro: x.item.x + Math.max(x.item.width, 1)/2
+            })).sort((a,b) => a.xCentro-b.xCentro);
+
+            // Evita duplicidade caso o mesmo mês apareça em algum texto auxiliar.
+            const unicas = [];
+            for (const c of colunas) if (!unicas.some(u => u.mes===c.mes)) unicas.push(c);
+
+            const totalItens = row.itens.filter(item => /\bTOTAL\b/i.test(item.str));
+            const totalX = totalItens.length
+                ? Math.min(...totalItens.map(item => item.x))
+                : null;
+
+            return {index:i, colunas:unicas, totalX, y:row.y};
+        }
+        return null;
+    }
+
+    function localizarValorPorColuna(item, colunas, totalX) {
+        const xCentro = item.x + Math.max(item.width, 1)/2;
+        if (totalX != null && item.x >= totalX - 1) return null;
+
+        let melhor = null;
+        let menorDist = Infinity;
+        for (const c of colunas) {
+            const dist = Math.abs(xCentro - c.xCentro);
+            if (dist < menorDist) {
+                menorDist = dist;
+                melhor = c;
+            }
+        }
+        if (!melhor) return null;
+
+        // Uma coluna mensal não deve aceitar números muito distantes de seu
+        // centro. O limite é adaptativo ao espaçamento entre colunas.
+        const distancias = [];
+        for (let i=1;i<colunas.length;i++) distancias.push(colunas[i].xCentro-colunas[i-1].xCentro);
+        const espaco = distancias.length ? Math.min(...distancias.filter(v=>v>0)) : 55;
+        const limite = Math.max(12, espaco * 0.42);
+        if (menorDist > limite) return null;
+
+        return melhor.mes;
+    }
+
+    function processarPaginaNovaEstruturada(pagina) {
+        const rows = pagina.rows;
+        const cab = encontrarCabecalhoMensal(rows);
+        if (!cab) return {dados:[], meta:{}, diagnostico:{pagina:pagina.pagina, cabecalho:false}};
+
+        const ano = encontrarAnoReferenciaPagina(rows);
+        if (!ano) return {dados:[], meta:{}, diagnostico:{pagina:pagina.pagina, cabecalho:true, ano:false}};
+
+        const dadosPagina = [];
+        let tipoAtual = 'RECEITA';
+        const inicio = cab.index + 1;
+
+        for (let i=inicio; i<rows.length; i++) {
+            const row = rows[i];
+            const up = row.texto.toUpperCase();
+
+            if (/^DESCONTOS\b/.test(up) || up.includes(' DESCONTOS ')) tipoAtual='DESCONTO';
+            if (/^RENDIMENTOS\b/.test(up) || up.includes(' RENDIMENTOS ')) tipoAtual='RECEITA';
+
+            // A partir dos totais, a tabela mensal acabou.
+            if (/^TOTAL\s+(BRUTO|DESCONTOS|LIQUIDO)/i.test(row.texto) ||
+                /^TOTAL\s+L[IÍ]QUIDO/i.test(row.texto)) break;
+
+            const numeros = row.itens
+                .map(item => ({item, valor:parseValorFinanceiroNova(item.str)}))
+                .filter(x => x.valor !== null);
+            if (!numeros.length) continue;
+
+            const atribuicoes = [];
+            for (const n of numeros) {
+                const mes = localizarValorPorColuna(n.item, cab.colunas, cab.totalX);
+                if (mes) atribuicoes.push({mes, valor:n.valor, x:n.item.x});
+            }
+            if (!atribuicoes.length) continue;
+
+            // A descrição fica antes da primeira coluna mensal.
+            const primeiroX = Math.min(...cab.colunas.map(c=>c.xInicio));
+            const descItens = row.itens.filter(item => item.x < primeiroX - 2 && parseValorFinanceiroNova(item.str) === null);
+            let desc = limparDescricaoRubricaNova(descItens.map(i=>i.str).join(' '));
+            if (!desc) continue;
+
+            // Não confundir rodapés e totais com rubricas.
+            if (/^TOTAL\b/i.test(desc)) continue;
+
+            for (const a of atribuicoes) {
+                // Zero é informação válida da ficha e precisa ser preservado.
+                dadosPagina.push({
+                    Discriminacao: desc,
+                    Valor: a.valor,
+                    Competencia: `${MESES_FI[a.mes]}/${ano}`,
+                    Pagina: pagina.pagina,
+                    Ano: ano,
+                    Tipo: tipoAtual,
+                    colunaOrigem: a.mes,
+                    origemExtracao: 'ficha_nova_estrutural'
+                });
+            }
+        }
+
+        return {
+            dados:dadosPagina,
+            meta:{},
+            diagnostico:{pagina:pagina.pagina, cabecalho:true, ano, meses:cab.colunas.map(c=>c.mes), totalIgnorado: cab.totalX !== null}
+        };
+    }
+
+    function processarFichaNovaIntegradaEstrutural(linhas) {
+        const paginas = linhas._paginasEstruturadas || [];
+        if (!paginas.length) throw new Error('Não foi possível obter a estrutura espacial das páginas do PDF.');
+
+        let dados = [];
+        const diagnosticos = [];
+        for (const pagina of paginas) {
+            const r = processarPaginaNovaEstruturada(pagina);
+            dados = dados.concat(r.dados);
+            diagnosticos.push(r.diagnostico);
+        }
+
+        // Metadados: mantemos a identificação básica sem interferir no parser das rubricas.
+        const p1 = paginas[0]?.rows.map(r=>r.texto).join('\n') || '';
+        const meta = {Nome:'', CPF:'', Cargo:'', 'Data Emissão':''};
+        const mC = p1.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/); if (mC) meta.CPF=mC[0];
+        const mE = p1.match(/(?:EMITIDO EM|EMISSAO).*?(\d{2}\/\d{2}\/\d{4})/i); if (mE) meta['Data Emissão']=mE[1];
+        const mN = p1.match(/NOME(?: DO SERVIDOR)?\s*\n\s*([^\n]+)/i); if (mN) meta.Nome=mN[1].trim();
+        const mCG = p1.match(/CARGO\/EMPREGO\s*\n\s*([^\n]+)/i); if (mCG) meta.Cargo=mCG[1].trim();
+
+        // Remove duplicidades exatas produzidas por cópias/continuações do mesmo PDF.
+        const mapa = new Map();
+        for (const r of dados) {
+            const chave = `${r.Pagina}|${r.Competencia}|${r.Discriminacao}|${r.Tipo}|${Number(r.Valor).toFixed(2)}`;
+            if (!mapa.has(chave)) mapa.set(chave, r);
+        }
+        dados = [...mapa.values()].sort((a,b) => {
+            const [m1,y1]=a.Competencia.split('/').map(Number), [m2,y2]=b.Competencia.split('/').map(Number);
+            return y1-y2 || m1-m2 || a.Pagina-b.Pagina || a.Discriminacao.localeCompare(b.Discriminacao);
+        });
+
+        return {dados, meta, diagnosticos};
+    }
+
+    // ================= FICHA ANTIGA =================
+    function processarFichaAntigaIntegrada(linhas) {
+        const regs=[]; let estado='BUSCA_INICIO', ano=null, meses=[], idx=-1;
+        for (const l of linhas) {
+            const txt=l.texto;
+            if (RE_INICIO_FI.test(txt)) {estado='BUSCA_ANO';ano=null;meses=[];idx=-1;continue;}
+            if ((estado==='BUSCA_ANO'||estado==='BUSCA_MESES') && RE_ANO_FI.test(txt)) {ano=txt.match(RE_ANO_FI)[1];estado='BUSCA_MESES';continue;}
+            if (estado==='BUSCA_MESES' && txt.includes('|')) {
+                const m=Object.keys(MESES_FI).filter(k=>txt.includes(k));
+                if(m.length>=3){meses=m;idx=txt.split('|').map(c=>c.trim()).findIndex(c=>meses.includes(c));estado='LEITURA';continue;}
+            }
+            if(estado==='LEITURA'){
+                if(RE_FIM_FI.test(txt)) continue;
+                if(txt.includes('|')&&meses.length>0&&idx!==-1&&ano){
+                    const cols=txt.split('|').map(c=>c.trim());
+                    if(cols.length<=Math.max(idx+1,2)) continue;
+                    const desc=limparTexto(cols[1]); if(!desc) continue;
+                    const tipo=(cols[2]||'').toUpperCase().includes('D')?'DESCONTO':'RECEITA';
+                    const vals=cols.slice(idx,idx+meses.length);
+                    for(let i=0;i<meses.length;i++){const mv=vals[i]?.match(RE_VALOR_FI);if(mv)regs.push({Discriminacao:desc,Valor:mv[0],Competencia:`${MESES_FI[meses[i]]}/${ano}`,Pagina:l.pagina,Ano:ano,Tipo:tipo});}
+                }
+            }
+        }
+        return regs;
+    }
+
+    function converterExtracaoParaEntradaCalculo(regs) {
+        return ['Discriminacao\tValor\tCompetencia\tTipo', ...regs.map(r=>[r.Discriminacao, typeof r.Valor==='number'?r.Valor.toFixed(2).replace('.',','):r.Valor, r.Competencia, r.Tipo||''].join('\t'))].join('\n');
+    }
+
+    async function extrairFichasModeloIntegrado(modelo) {
+        if(!pdfFichasUnificado){fecharModalModeloFichaIntegrada();setFichasStatus('Nenhum PDF unificado disponível.','error');return;}
+        const st=document.getElementById('modeloFichaStatus'); st.textContent='⏳ Lendo o PDF unificado e extraindo os dados...';
+        try{
+            const linhas=await lerPDFFichasIntegrado(pdfFichasUnificado);
+            if(!linhas.length){throw new Error('O PDF unificado não apresentou texto pesquisável.');}
+            let regs=[];
+            if(modelo==='antiga') regs=processarFichaAntigaIntegrada(linhas); else regs=processarFichaNovaIntegradaEstrutural(linhas).dados;
+            if(!regs.length){st.textContent='⚠️ Nenhum registro foi encontrado com este modelo. Selecione o outro modelo e tente novamente.';return;}
+            const cbModelo = document.getElementById('modeloIncluirAuxilio');
+            incluirAuxilioAlimentacao = !!(cbModelo && cbModelo.checked);
+            const cbGlobal = document.getElementById('incluirAuxilioAlimentacao');
+            if (cbGlobal) cbGlobal.checked = incluirAuxilioAlimentacao;
+            const quantidadeAuxilio = regs.filter(r => ehAuxilioAlimentacao(r.Discriminacao)).length;
+            const quantidadeFeriasAntecipacaoIgnorada = regs.filter(r => { const n = normalizarRubrica(r.Discriminacao); return n.includes('FERIAS') && n.includes('ANTECIPACAO') && !ehFeriasAdicionalTerco(r.Discriminacao); }).length;
+            const regsParaCalculo = incluirAuxilioAlimentacao ? regs : regs.filter(r => !ehAuxilioAlimentacao(r.Discriminacao));
+            const entrada=converterExtracaoParaEntradaCalculo(regsParaCalculo);
+            document.getElementById('csvInput').value=entrada;
+            processar();
+            fecharModalModeloFichaIntegrada();
+            const avisoFerias = quantidadeFeriasAntecipacaoIgnorada ? ` ${quantidadeFeriasAntecipacaoIgnorada} registro(s) de férias antecipadas foram ignorados na apuração do 1/3.` : '';
+            setFichasStatus(`✓ ${fichasIntegradas.length} ficha(s) unificada(s) e ${regs.length} registro(s) extraído(s) com ${modelo==='antiga'?'Ficha Antiga':'Ficha Nova'}. ${quantidadeAuxilio ? (incluirAuxilioAlimentacao ? 'Auxílio-Alimentação incluído no cálculo.' : `Auxílio-Alimentação encontrado em ${quantidadeAuxilio} registro(s), mas NÃO incluído no cálculo.`) : 'Nenhum Auxílio-Alimentação identificado.'}${avisoFerias} O histórico foi carregado na Aba 1.`, 'ok');
+            const url=URL.createObjectURL(pdfFichasUnificado);
+            document.getElementById('fichasResultadoAcoes').innerHTML=`<a class="btn btn-outline" style="padding:6px 10px;font-size:.75em" href="${url}" download="${pdfFichasUnificadoNome}">📥 Baixar PDF unificado</a>`;
+        }catch(e){console.error(e);st.textContent=`❌ ${e.message||e}`;}
+    }
+
+    function imprimir() {
+        const h = document.getElementById('print-content');
+        let html = '';
+        const c = [
+            {l: 'Processo:', v: document.getElementById('procNumero').value}, 
+            {l: 'Classe:', v: document.getElementById('procClasse').value}, 
+            {l: 'Parte Autora:', v: document.getElementById('procAutor').value}, 
+            {l: 'Réu:', v: document.getElementById('procReu').value}, 
+            {l: 'Assunto:', v: document.getElementById('procAssunto').value, mt: '15px'}
+        ];
+        
+        c.forEach(i => { 
+            if(i.v.trim()) {
+                let extraStyle = i.mt ? `margin-top: ${i.mt};` : '';
+                html += `<p style="margin:4px 0; ${extraStyle}"><strong>${i.l}</strong> ${i.v}</p>`; 
+            }
+        });
+        h.innerHTML = html;
+        
+        const rodapeTexto = document.getElementById('rodapeImpressao');
+        let corRodape = localStorage.getItem('fundo_rodape_cor') || 'preto';
+        
+        if (corRodape === 'branco') {
+            rodapeTexto.style.setProperty('color', '#ffffff', 'important');
+        } else {
+            rodapeTexto.style.setProperty('color', '#000000', 'important');
+        }
+        
+        rodapeTexto.style.setProperty('z-index', '9999', 'important');
+
+        let styleGeral = document.getElementById('stylePrintOverride');
+        if (!styleGeral) {
+            styleGeral = document.createElement('style');
+            styleGeral.id = 'stylePrintOverride';
+            document.head.appendChild(styleGeral);
+        }
+
+        let mTopo = localStorage.getItem('sangria_margem_topo') || '3.5';
+        let mFundo = localStorage.getItem('sangria_margem_fundo') || '1.0';
+
+        if (imagemFundoGlobal) {
+            styleGeral.innerHTML = `
+                @media print { 
+                    @page { margin: 0 !important; } 
+                    body { padding: 0 !important; margin: 0 !important; } 
+                    .container { 
+                        width: 100% !important; 
+                        max-width: 100% !important;
+                        padding: ${mTopo}cm 1cm calc(${mFundo}cm + 1.5cm) 1cm !important; 
+                        box-sizing: border-box !important;
+                        margin: 0 !important;
+                    } 
+                    #tab2 { padding-top: ${mTopo}cm !important; }
+                    .print-footer { bottom: ${mFundo}cm !important; display: block !important; }
+                }
+            `;
+        } else {
+            styleGeral.innerHTML = ''; 
+        }
+
+        window.print();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setInitialDate();
+        geraParams();
+        renderSentencaRecebida();
+        
+        const t = localStorage.getItem('tema_ativo_tipo') || 'sistema';
+        document.getElementById('pageBody').className = 
+            (t === 'classico' ? 'theme-classic' : (t === 'salmao' ? 'theme-salmon' : 'theme-sistema'));
+        
+        const bgSalvo = localStorage.getItem('backup_fundo_pdf_sangria');
+        if (bgSalvo) {
+            imagemFundoGlobal = bgSalvo;
+            renderizarFundoNaTela();
+        }
+
+        const indicesSalvos = localStorage.getItem('backupIndices');
+        if (indicesSalvos) {
+            document.getElementById('csvIndices').value = indicesSalvos;
+            processarIndices();
+        }
+    });
+</script>
+</body>
+</html>
