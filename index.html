@@ -365,6 +365,14 @@
             hr.divider { -webkit-print-color-adjust: exact; color-adjust: exact; border-top: 3px solid #174A67 !important; }
         }
     </style>
+
+<style id="computum-auth-style">
+#computumAuthOverlay{position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#f7f4ef 0%,#eee7df 100%);display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+#computumAuthOverlay[hidden]{display:none!important}
+.ca-card{width:min(430px,calc(100% - 32px));background:#fff;border:1px solid #e4ddd5;border-radius:20px;padding:34px;box-shadow:0 20px 60px rgba(60,40,25,.12)}
+.ca-brand{font-weight:800;letter-spacing:.08em;color:#9b583f;font-size:13px;text-transform:uppercase}.ca-title{font-size:28px;margin:10px 0 7px;color:#292522}.ca-sub{color:#746c65;font-size:14px;line-height:1.5;margin-bottom:24px}.ca-field{display:block;margin:14px 0}.ca-field span{display:block;font-size:12px;font-weight:700;color:#514a44;margin-bottom:7px}.ca-field input{width:100%;box-sizing:border-box;border:1px solid #d9d0c8;border-radius:10px;padding:12px 13px;font-size:15px;outline:none}.ca-field input:focus{border-color:#a85f43;box-shadow:0 0 0 3px rgba(168,95,67,.12)}.ca-btn{width:100%;border:0;border-radius:10px;padding:13px;background:#a85f43;color:white;font-weight:700;cursor:pointer;margin-top:8px}.ca-link{border:0;background:none;color:#9b583f;cursor:pointer;padding:10px 0;font-size:13px}.ca-msg{min-height:20px;font-size:13px;margin-top:10px;color:#9b583f}.computum-userbar{position:fixed;top:10px;right:12px;z-index:99998;background:rgba(255,255,255,.94);border:1px solid #ddd4cc;border-radius:999px;padding:6px 8px 6px 12px;display:flex;align-items:center;gap:9px;box-shadow:0 5px 18px rgba(0,0,0,.08);font:13px system-ui}.computum-userbar button{border:0;background:#f1ebe5;color:#8e503b;border-radius:999px;padding:6px 10px;cursor:pointer}.computum-auth-recovery{display:none}.computum-auth-recovery.active{display:block}
+@media print{#computumAuthOverlay,.computum-userbar{display:none!important}}
+</style>
 </head>
 <body id="pageBody">
 
@@ -876,6 +884,7 @@
 </div>
 <div id="modalCorrecaoSentenca" class="modal-overlay no-print" onclick="fecharModalForaCorrecaoSentenca(event)"><div class="modal-content"><button class="modal-close" onclick="fecharModalCorrecaoSentenca()">&times;</button><h2 class="modal-title">Informações de Correção Monetária da Sentença</h2><div id="correcaoSentencaConteudo" class="modal-body"><p>Nenhuma sentença foi recebida ainda.</p></div></div></div>
 <div id="modalRevisaoSentenca" class="modal-overlay no-print" onclick="fecharModalForaRevisaoSentenca(event)"><div class="modal-content"><button class="modal-close" onclick="fecharModalRevisaoSentenca()">&times;</button><h2 class="modal-title">Revisão da Sentença</h2><div id="revisaoSentencaConteudo" class="modal-body"></div><div style="text-align:right;margin-top:25px;display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-outline" onclick="fecharModalRevisaoSentenca()">Cancelar</button><button class="btn btn-success" onclick="aplicarDadosSentenca()">✅ Aplicar dados ao cálculo</button></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -2662,6 +2671,23 @@
             processarIndices();
         }
     });
+</script>
+
+<script id="computum-auth-script">
+(function(){
+ const SUPABASE_URL='https://tdcexflyomkpygtxynjb.supabase.co';
+ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_dqM-ROG8Pc7OwW6F-Swcpw_-DMNn19R';
+ const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+ const overlay=document.getElementById('computumAuthOverlay'), form=document.getElementById('caForm'), email=document.getElementById('caEmail'), pass=document.getElementById('caPassword'), msg=document.getElementById('caMsg'), forgot=document.getElementById('caForgot'), bar=document.getElementById('computumUserbar'), userEmail=document.getElementById('computumUserEmail'), title=document.getElementById('caTitle'), sub=document.getElementById('caSub');
+ function showMsg(t){msg.textContent=t;}
+ function showUser(user){overlay.hidden=true;bar.style.display='flex';userEmail.textContent=user?.email||'';}
+ function showLogin(){overlay.hidden=false;bar.style.display='none';title.textContent='Acesso restrito';sub.textContent='Entre com seu e-mail e senha para acessar o cálculo de Abono de Permanência.';pass.value='';}
+ form.addEventListener('submit',async e=>{e.preventDefault();showMsg('Entrando...');const {error}=await client.auth.signInWithPassword({email:email.value.trim(),password:pass.value});if(error){showMsg('Não foi possível entrar: '+error.message);return;}showMsg('');});
+ forgot.addEventListener('click',async()=>{if(!email.value.trim()){showMsg('Informe seu e-mail primeiro.');return;}showMsg('Enviando instruções...');const {error}=await client.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:location.origin+location.pathname});showMsg(error?'Não foi possível enviar: '+error.message:'Verifique seu e-mail para redefinir a senha.');});
+ document.getElementById('computumLogout').addEventListener('click',async()=>{await client.auth.signOut();showLogin();});
+ client.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){overlay.hidden=false;bar.style.display='none';title.textContent='Redefinir senha';sub.textContent='Defina uma nova senha para sua conta.';form.innerHTML='<label class="ca-field"><span>Nova senha</span><input id="caNewPassword" type="password" minlength="6" required></label><button class="ca-btn" type="submit">Salvar nova senha</button>';form.onsubmit=async e=>{e.preventDefault();const p=document.getElementById('caNewPassword').value;const {error}=await client.auth.updateUser({password:p});showMsg(error?'Não foi possível alterar: '+error.message:'Senha alterada.');if(!error)setTimeout(()=>location.reload(),700);};} else if(session){showUser(session.user);} else {showLogin();}});
+ client.auth.getSession().then(({data})=>{if(data.session)showUser(data.session.user);else showLogin();});
+})();
 </script>
 </body>
 </html>
