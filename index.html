@@ -376,6 +376,25 @@
 </head>
 <body id="pageBody">
 
+<div id="computumAuthOverlay" aria-modal="true" role="dialog">
+  <div class="ca-card">
+    <div class="ca-brand">COMPUTUM</div>
+    <h2 id="caTitle" class="ca-title">Acesso restrito</h2>
+    <p id="caSub" class="ca-sub">Entre com seu e-mail e senha para acessar o cálculo de Abono de Permanência.</p>
+    <form id="caForm" autocomplete="on">
+      <label class="ca-field"><span>E-mail</span><input id="caEmail" type="email" autocomplete="username" required></label>
+      <label class="ca-field"><span>Senha</span><input id="caPassword" type="password" autocomplete="current-password" required></label>
+      <button class="ca-btn" type="submit">Entrar</button>
+      <button id="caForgot" class="ca-link" type="button">Esqueci minha senha</button>
+      <div id="caMsg" class="ca-msg" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+<div id="computumUserbar" class="computum-userbar" style="display:none">
+  <span id="computumUserEmail"></span>
+  <button id="computumLogout" type="button">Sair</button>
+</div>
+
 <div id="printBg" class="print-bg"></div>
 
 <div id="dragOverlay" class="drag-overlay no-print">
